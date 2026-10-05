@@ -1,0 +1,12 @@
+{
+  "from_name": "Alice",
+  "to_name": "Bob",
+  "subject": "Encoding fixture: æøå",
+  "body_text": "First line.\nSecond line. Temperature: 20 °C.",
+  "external_id": "2:236/77 fixture-001",
+  "from_address": "2:236/77",
+  "to_address": "2:236/78",
+  "posted_at": "2026-01-01T12:00:00",
+  "attributes_raw": 0,
+  "control_lines": [{"name": "CHRS", "value": "CP850 2"}]
+}
