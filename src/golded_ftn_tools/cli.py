@@ -277,7 +277,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         code = _run(args)
         try:
-            sys.stdout.flush()
+            sys.stdout.buffer.flush()
+            sys.stdout.buffer.close()
         except OSError as error:
             if not _pipe_closed(error):
                 raise
