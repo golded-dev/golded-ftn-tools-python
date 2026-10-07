@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Create an empty FTN message base with ftnt create.">
+<title>ftnt create</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip" href="#usage">Skip to content</a>
+<div class="page">
+<header class="masthead">
+<a class="logo-mark" href="index.html" aria-label="FTNT home">
+<img class="logo" src="assets/golded-logo.png" width="600" height="205" alt="GoldED">
+<span class="logo-subtitle" aria-hidden="true">for the shell</span>
+</a>
+<div><span>FTNT💥</span><a href="https://golded-dev.github.io/golded-ftn-python-docs/">Library docs ↗</a></div>
+</header>
+<div class="shell">
+<div class="bar"><span>GOLDED / FTN TOOLS</span><span>LOCAL IMPLEMENTATION · NOT RELEASED · PYTHON 3.12+</span></div>
+<div class="layout">
+<aside><div class="sidebar">
+<nav class="page-nav" aria-label="Manual"><a href="index.html">Home</a><a href="create.html" aria-current="page">create</a><a href="write.html">write</a><a href="read.html">read</a><a href="export.html">export</a><a href="decode.html">decode</a><a href="repair.html">repair</a><a href="heads.html">heads</a><a href="catalog.html">catalog</a></nav>
+<details class="contents" open><summary>On this page</summary><nav class="nav" aria-label="Sections"><a href="#usage"><span class="num">00</span>Usage</a><a href="#failures"><span class="num">01</span>Failures</a></nav></details>
+</div></aside>
+<main><p class="eyebrow">Empty files. Nothing imported.</p><p class="command">ftnt create</p><h1>Create an empty base.</h1><p class="hero-lead">Make a new message base in one format. The command does not import messages.</p><section class="guide-section" id="usage"><div class="section-title"><span>00</span><h2>Usage</h2></div><p><code>ftnt create BASE --format FORMAT</code></p><p>Creates an empty base at <code>BASE</code>. The path is the base the format package expects: a <code>.MSG</code> directory for <code>msg</code> and <code>opus</code>, and the JAM, Squish or Hudson base path for the other formats. Hudson <code>create</code> does not take <code>--board</code>; boards are chosen when you write.</p><div class="code-pane" id="create-jam"><div class="code-head"><span>create a JAM base</span><button type="button" data-copy="create-jam-text" hidden>Copy code</button></div><pre><code id="create-jam-text">ftnt create ./fixtures/general --format jam
+</code></pre></div><p>Stdout is one JSON object. <code>base</code> is the resolved path.</p><div class="code-pane" id="create-result"><div class="code-head"><span>create_result</span><button type="button" data-copy="create-result-text" hidden>Copy code</button></div><pre><code id="create-result-text">{&quot;schema_version&quot;:1,&quot;type&quot;:&quot;create_result&quot;,&quot;format&quot;:&quot;jam&quot;,&quot;base&quot;:&quot;/resolved/fixtures/general&quot;}
+</code></pre></div></section><section class="guide-section" id="failures"><div class="section-title"><span>01</span><h2>Failures</h2></div><p>An existing base fails with exit 3. An unknown path problem from the filesystem fails with exit 6. <code>--format</code> is required and must be one of <code>msg</code>, <code>opus</code>, <code>jam</code>, <code>squish</code> or <code>hudson</code>.</p></section></main>
+</div></div>
+<footer><span>GoldED FTN tools / GoldED.dev</span><span>LOCAL IMPLEMENTATION · MIT LICENSE</span></footer>
+</div>
+
+<script>
+const contents=document.querySelector('.contents');
+if(contents && window.matchMedia('(max-width:800px)').matches) contents.open=false;
+for(const button of document.querySelectorAll('[data-copy]')){
+  button.hidden=false;
+  button.addEventListener('click', async () => {
+    const node=document.getElementById(button.dataset.copy);
+    const text=node.textContent;
+    try {
+      if(navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(text);
+      } else {
+        const field=document.createElement('textarea');
+        field.value=text;
+        field.style.position='fixed';
+        field.style.opacity='0';
+        document.body.append(field);
+        field.select();
+        const ok=document.execCommand('copy');
+        field.remove();
+        button.focus();
+        if(!ok) throw new Error('copy');
+      }
+      button.textContent='Copied';
+    } catch {
+      button.textContent='Select code';
+      const range=document.createRange();
+      range.selectNodeContents(node);
+      const selection=window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    setTimeout(() => button.textContent='Copy code', 1800);
+  });
+}
+const links=[...document.querySelectorAll('.nav a')];
+const sections=[...document.querySelectorAll('main section')];
+function markSection(id){
+  for(const link of links){
+    if(link.hash === '#' + id) link.setAttribute('aria-current','location');
+    else link.removeAttribute('aria-current');
+  }
+}
+function track(){
+  if(!sections.length) return;
+  let current=sections[0].id;
+  for(const section of sections){
+    if(section.getBoundingClientRect().top <= 120) current=section.id;
+  }
+  const page=document.scrollingElement;
+  if(page.scrollHeight > page.clientHeight &&
+     Math.ceil(page.scrollTop + page.clientHeight) >= page.scrollHeight - 2){
+    current=sections[sections.length - 1].id;
+  }
+  markSection(current);
+}
+window.addEventListener('scroll', track, {passive:true});
+window.addEventListener('resize', track);
+window.addEventListener('hashchange', () => {
+  const selected=links.find(link => link.hash === window.location.hash);
+  if(selected) markSection(selected.hash.slice(1));
+  else track();
+});
+track();
+</script>
+
+</body>
+</html>

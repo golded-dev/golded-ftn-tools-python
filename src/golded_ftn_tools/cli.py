@@ -41,8 +41,22 @@ def parser() -> argparse.ArgumentParser:
     root.add_argument(
         "--debug", action="store_true", help="show error tracebacks on stderr"
     )
+    root.add_argument(
+        "--json-errors",
+        action="store_true",
+        help="print errors as JSON objects on stderr",
+    )
     commands = root.add_subparsers(dest="command", required=True)
-    for name in ("create", "write", "read", "export", "decode", "repair"):
+    for name in (
+        "create",
+        "write",
+        "read",
+        "export",
+        "decode",
+        "repair",
+        "heads",
+        "catalog",
+    ):
         epilog = ""
         if name == "write":
             epilog = (
@@ -58,24 +72,36 @@ def parser() -> argparse.ArgumentParser:
             )
         elif name in {"decode", "repair"}:
             epilog = "This command reads the whole input into memory."
+        elif name == "heads":
+            epilog = (
+                "One JSON object per message, without the body. "
+                "The default limit is 100. --limit 0 reads the whole base."
+            )
         sub = commands.add_parser(name, epilog=epilog)
         sub.add_argument("--debug", action="store_true", default=argparse.SUPPRESS)
-        if name in {"create", "write", "read", "export"}:
+        sub.add_argument(
+            "--json-errors", action="store_true", default=argparse.SUPPRESS
+        )
+        if name in {"create", "write", "read", "export", "heads"}:
             sub.add_argument("base", type=Path)
             sub.add_argument(
                 "--format",
                 required=True,
                 choices=("msg", "opus", "jam", "squish", "hudson"),
             )
-        if name in {"write", "read", "export"}:
+        if name in {"write", "read", "export", "heads"}:
             sub.add_argument("--board", type=int, help="Hudson board, 1..200")
         if name == "write":
             sub.add_argument("--jsonl", action="store_true")
             sub.add_argument("--encoding", default="CP850")
         if name in {"write", "read"}:
             sub.add_argument("--lock-timeout", type=_timeout, default=5.0)
-        if name in {"read", "export"}:
+        if name in {"read", "export", "heads"}:
             sub.add_argument("--fallback-charset", default="CP850")
+        if name == "heads":
+            sub.add_argument("--limit", type=int, default=100)
+            sub.add_argument("--after", type=int)
+            sub.add_argument("--archive", action="store_true")
         if name == "read":
             sub.add_argument("msgno", type=int)
             group = sub.add_mutually_exclusive_group()
@@ -103,16 +129,30 @@ def _text(value: str) -> None:
     sys.stdout.buffer.flush()
 
 
-def _report(error: ToolError, debug: bool) -> int:
-    if error.input_record is not None:
-        print(
-            f"ftnt: input record {error.input_record}; "
-            f"committed {error.committed}: {error}",
-            file=sys.stderr,
-        )
+def _sentence(error: ToolError) -> str:
+    if error.input_record is None:
+        return str(error)
+    return f"input record {error.input_record}; committed {error.committed}: {error}"
+
+
+def _report(error: ToolError, debug: bool, json_errors: bool) -> int:
+    sentence = _sentence(error)
+    structured = json_errors or not sys.stderr.isatty()
+    if structured:
+        payload: dict[str, object] = {
+            "schema_version": 1,
+            "type": "error",
+            "code": error.code,
+            "exit_status": error.exit_status,
+            "message": sentence,
+        }
+        if error.input_record is not None:
+            payload["input_record"] = error.input_record
+            payload["committed"] = error.committed
+        _emit(payload, sys.stderr.buffer)
     else:
-        print(f"ftnt: {error}", file=sys.stderr)
-    if debug:
+        print(f"ftnt: {sentence}", file=sys.stderr)
+    if debug and not structured:
         traceback.print_exc(file=sys.stderr)
     return error.exit_status
 
@@ -133,6 +173,11 @@ def _run(args: argparse.Namespace) -> int:
         else:
             _emit(result)
         return 0
+    if args.command == "catalog":
+        _emit(api.catalog())
+        return 0
+    if args.command == "heads":
+        return _heads(args)
     if args.command == "create":
         _emit(api.create(args.format, args.base))
         return 0
@@ -184,6 +229,28 @@ def _run(args: argparse.Namespace) -> int:
     return exported.exit_status
 
 
+def _heads(args: argparse.Namespace) -> int:
+    def on_issue(issue: ReaderIssue) -> None:
+        _emit(
+            {"schema_version": 1, "type": "reader_issue", "issue": issue},
+            sys.stderr.buffer,
+        )
+
+    indexed = api.heads(
+        args.format,
+        args.base,
+        board=args.board,
+        fallback_charset=args.fallback_charset,
+        archive=args.archive,
+        limit=args.limit,
+        after=args.after,
+        on_issue=on_issue if args.archive else None,
+    )
+    for row in indexed:
+        _emit(row)
+    return indexed.exit_status
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
@@ -200,8 +267,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("ftnt: interrupted", file=sys.stderr)
         return 130
     except ToolError as error:
-        return _report(error, args.debug)
+        return _report(error, args.debug, args.json_errors)
     except Exception as error:
         from .errors import classify
 
-        return _report(classify(error), args.debug)
+        return _report(classify(error), args.debug, args.json_errors)

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Read one message from an FTN base with ftnt read.">
+<title>ftnt read</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip" href="#usage">Skip to content</a>
+<div class="page">
+<header class="masthead">
+<a class="logo-mark" href="index.html" aria-label="FTNT home">
+<img class="logo" src="assets/golded-logo.png" width="600" height="205" alt="GoldED">
+<span class="logo-subtitle" aria-hidden="true">for the shell</span>
+</a>
+<div><span>FTNT💥</span><a href="https://golded-dev.github.io/golded-ftn-python-docs/">Library docs ↗</a></div>
+</header>
+<div class="shell">
+<div class="bar"><span>GOLDED / FTN TOOLS</span><span>LOCAL IMPLEMENTATION · NOT RELEASED · PYTHON 3.12+</span></div>
+<div class="layout">
+<aside><div class="sidebar">
+<nav class="page-nav" aria-label="Manual"><a href="index.html">Home</a><a href="create.html">create</a><a href="write.html">write</a><a href="read.html" aria-current="page">read</a><a href="export.html">export</a><a href="decode.html">decode</a><a href="repair.html">repair</a><a href="heads.html">heads</a><a href="catalog.html">catalog</a></nav>
+<details class="contents" open><summary>On this page</summary><nav class="nav" aria-label="Sections"><a href="#usage"><span class="num">00</span>Usage</a><a href="#envelope"><span class="num">01</span>Envelope</a></nav></details>
+</div></aside>
+<main><p class="eyebrow">One number. The whole message.</p><p class="command">ftnt read</p><h1>Read one message.</h1><p class="hero-lead">JSON for the whole message, or the body text alone.</p><section class="guide-section" id="usage"><div class="section-title"><span>00</span><h2>Usage</h2></div><p><code>ftnt read BASE MSGNO --format FORMAT [options]</code></p><p><code>MSGNO</code> is the message number in that base, starting at 1. The default output is one JSON envelope on stdout.</p><div class="code-pane" id="read-one"><div class="code-head"><span>read message 1</span><button type="button" data-copy="read-one-text" hidden>Copy code</button></div><pre><code id="read-one-text">ftnt read ./fixtures/general 1 --format jam
+</code></pre></div><div class="table-wrap"><table><thead><tr><th>Option</th><th>Meaning</th></tr></thead><tbody><tr><td><code>--body</code></td><td>Write <code>body_text</code> only. No added newline. Controls that the reader left in the body stay there.</td></tr><tr><td><code>--revision</code></td><td>Add writer <code>identity</code> and <code>revision</code> to the envelope. Mutually exclusive with <code>--body</code>.</td></tr><tr><td><code>--fallback-charset</code></td><td>Charset when the message does not declare one. Default <code>CP850</code>.</td></tr><tr><td><code>--lock-timeout</code></td><td>Used with <code>--revision</code>. Default 5 seconds.</td></tr><tr><td><code>--board</code></td><td>Required for Hudson, 1..200. The number must match the message board.</td></tr></tbody></table></div></section><section class="guide-section" id="envelope"><div class="section-title"><span>01</span><h2>Envelope</h2></div><p><code>message</code> contains the reader fields, including nulls. Dates use ISO 8601. Addresses stay reader strings. <code>source.base</code> is the resolved base path. <code>source.board</code> is null except for Hudson, where it is the board byte.</p><div class="code-pane" id="read-envelope"><div class="code-head"><span>message envelope</span><button type="button" data-copy="read-envelope-text" hidden>Copy code</button></div><pre><code id="read-envelope-text">{
+  &quot;schema_version&quot;: 1,
+  &quot;type&quot;: &quot;message&quot;,
+  &quot;source&quot;: {&quot;format&quot;: &quot;jam&quot;, &quot;base&quot;: &quot;/resolved/fixtures/general&quot;, &quot;board&quot;: null},
+  &quot;message&quot;: {&quot;msgno&quot;: 1, &quot;from_name&quot;: &quot;Alice&quot;, &quot;to_name&quot;: &quot;Bob&quot;, &quot;subject&quot;: &quot;Encoding fixture: æøå&quot;, &quot;body_text&quot;: &quot;First line.\nSecond line.&quot;, &quot;attributes_raw&quot;: 0}
+}
+</code></pre></div><p>A missing number exits 3. Text is not repaired on the way out. Use <a href="repair.html"><code>repair</code></a> on purpose when you want that heuristic.</p></section></main>
+</div></div>
+<footer><span>GoldED FTN tools / GoldED.dev</span><span>LOCAL IMPLEMENTATION · MIT LICENSE</span></footer>
+</div>
+
+<script>
+const contents=document.querySelector('.contents');
+if(contents && window.matchMedia('(max-width:800px)').matches) contents.open=false;
+for(const button of document.querySelectorAll('[data-copy]')){
+  button.hidden=false;
+  button.addEventListener('click', async () => {
+    const node=document.getElementById(button.dataset.copy);
+    const text=node.textContent;
+    try {
+      if(navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(text);
+      } else {
+        const field=document.createElement('textarea');
+        field.value=text;
+        field.style.position='fixed';
+        field.style.opacity='0';
+        document.body.append(field);
+        field.select();
+        const ok=document.execCommand('copy');
+        field.remove();
+        button.focus();
+        if(!ok) throw new Error('copy');
+      }
+      button.textContent='Copied';
+    } catch {
+      button.textContent='Select code';
+      const range=document.createRange();
+      range.selectNodeContents(node);
+      const selection=window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    setTimeout(() => button.textContent='Copy code', 1800);
+  });
+}
+const links=[...document.querySelectorAll('.nav a')];
+const sections=[...document.querySelectorAll('main section')];
+function markSection(id){
+  for(const link of links){
+    if(link.hash === '#' + id) link.setAttribute('aria-current','location');
+    else link.removeAttribute('aria-current');
+  }
+}
+function track(){
+  if(!sections.length) return;
+  let current=sections[0].id;
+  for(const section of sections){
+    if(section.getBoundingClientRect().top <= 120) current=section.id;
+  }
+  const page=document.scrollingElement;
+  if(page.scrollHeight > page.clientHeight &&
+     Math.ceil(page.scrollTop + page.clientHeight) >= page.scrollHeight - 2){
+    current=sections[sections.length - 1].id;
+  }
+  markSection(current);
+}
+window.addEventListener('scroll', track, {passive:true});
+window.addEventListener('resize', track);
+window.addEventListener('hashchange', () => {
+  const selected=links.find(link => link.hash === window.location.hash);
+  if(selected) markSection(selected.hash.slice(1));
+  else track();
+});
+track();
+</script>
+
+</body>
+</html>

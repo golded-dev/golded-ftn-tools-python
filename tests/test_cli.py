@@ -32,6 +32,17 @@ def message(**changes: Any) -> bytes:
     ).encode()
 
 
+def test_json_errors_are_objects(tmp_path: Path) -> None:
+    base = str(tmp_path / "base")
+    assert cli("create", base, "--format", "msg").returncode == 0
+    result = cli("write", base, "--format", "msg", "--json-errors", data=b"{}")
+    assert result.returncode == 2
+    payload = json.loads(result.stderr)
+    assert payload["type"] == "error"
+    assert payload["code"] == "input.structure"
+    assert payload["exit_status"] == 2
+
+
 def test_help_and_version() -> None:
     result = cli("--help")
     assert result.returncode == 0
@@ -44,6 +55,8 @@ def test_help_and_version() -> None:
             "export",
             "decode",
             "repair",
+            "heads",
+            "catalog",
         )
     )
     assert not result.stderr

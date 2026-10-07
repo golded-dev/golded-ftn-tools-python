@@ -39,10 +39,12 @@ Both filters read the whole input into memory. Decode uses the core charset
 aliases, strict decoding and preserves line endings and trailing nulls.
 Repair uses the core heuristic explicitly; import/export never repair text.
 
-Read the [specification](docs/SPEC.md), [JSON contract](docs/JSON.md),
-[implementation plan](docs/PLAN.md) and [verification record](docs/VERIFICATION.md).
-The [HTML landing page](index.html) and reading copies share [DESIGN.md](DESIGN.md).
-Examples are in `examples/`.
+The public manual is the [front page](index.html) and one page per command:
+[create](create.html), [write](write.html), [read](read.html),
+[export](export.html), [decode](decode.html), [repair](repair.html),
+[heads](heads.html) and [catalog](catalog.html).
+Examples are in `examples/`. Maintainer notes stay in `docs/`.
+The pages share [DESIGN.md](DESIGN.md).
 
 Checks:
 

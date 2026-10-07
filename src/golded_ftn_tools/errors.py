@@ -12,6 +12,21 @@ from golded_ftn import (
 
 from .json_contract import InputError
 
+ERROR_CODES: dict[str, int] = {
+    "input.structure": 2,
+    "input.date": 2,
+    "base.missing": 3,
+    "base.exists": 3,
+    "message.missing": 3,
+    "input.charset": 4,
+    "reader.failed": 4,
+    "writer.rejected": 4,
+    "lock.timeout": 5,
+    "revision.conflict": 5,
+    "io.failed": 6,
+    "internal": 1,
+}
+
 
 class ToolError(Exception):
     """A failed operation with the exit status the CLI already uses."""

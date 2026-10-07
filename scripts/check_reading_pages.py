@@ -1,11 +1,21 @@
-"""Check generated reading-copy links, IDs, navigation and embedded JSON."""
+"""Check the public manual: IDs, navigation, local links and embedded examples."""
 
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-PAGES = ("index.html", "specification.html", "json-contract.html", "plan.html")
+PAGES = (
+    "index.html",
+    "create.html",
+    "write.html",
+    "read.html",
+    "export.html",
+    "decode.html",
+    "repair.html",
+    "heads.html",
+    "catalog.html",
+)
 
 
 class Page(HTMLParser):
@@ -30,7 +40,7 @@ class Page(HTMLParser):
             self.copies.append(target)
         if attributes.get("aria-current") == "page":
             self.current += 1
-        if tag == "code" and attributes.get("id") == "example-json":
+        if tag == "code" and attributes.get("id") == "write-message-text":
             self._example = True
 
     def handle_endtag(self, tag: str) -> None:
@@ -55,12 +65,23 @@ def main() -> None:
             assert (ROOT / path).is_file(), (name, link)
             if target.fragment and path in pages:
                 assert unquote(target.fragment) in pages[path].ids, (name, link)
-    assert pages["index.html"].example == (ROOT / "examples/message.json").read_text()
+        text = (ROOT / name).read_text(encoding="utf-8").lower()
+        for banned in (
+            "specification.html",
+            "plan.html",
+            "docs/spec.md",
+            "docs/plan.md",
+        ):
+            assert banned not in text, (name, banned)
+    source = (ROOT / "examples/message.json").read_text(encoding="utf-8")
+    if not source.endswith("\n"):
+        source += "\n"
+    assert pages["write.html"].example == source
     print(
-        "Four HTML pages: unique IDs, local links/anchors, "
-        "copy targets and page markers passed."
+        "Nine manual pages: unique IDs, local links, copy targets, "
+        "page markers and no spec/plan links passed."
     )
-    print("Embedded example JSON matches its source. No visual/browser check was run.")
+    print("Embedded message.json matches its source. No visual/browser check was run.")
 
 
 if __name__ == "__main__":

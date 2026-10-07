@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Proposal notes for future FTNT commands. Nothing here is implemented.">
+<title>FTNT · Ideas worth arguing about</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip" href="#preamble">Skip to content</a>
+<div class="page">
+<header class="masthead">
+<a class="logo-mark" href="index.html" aria-label="FTNT home">
+<img class="logo" src="assets/golded-logo.png" width="600" height="205" alt="GoldED">
+<span class="logo-subtitle" aria-hidden="true">for the shell</span>
+</a>
+<div><span>FTNT💥</span><a href="https://golded-dev.github.io/golded-ftn-python-docs/">Library docs ↗</a></div>
+</header>
+<div class="shell">
+<div class="bar"><span>GOLDED / FTN TOOLS</span><span>PROPOSALS · NOT IMPLEMENTED · NOT A RELEASE PLAN</span></div>
+<div class="layout">
+<aside><div class="sidebar">
+<nav class="page-nav" aria-label="Manual">
+<a href="index.html">Home</a>
+<a href="create.html">create</a>
+<a href="write.html">write</a>
+<a href="read.html">read</a>
+<a href="export.html">export</a>
+<a href="decode.html">decode</a>
+<a href="repair.html">repair</a>
+<a href="ideas.html" aria-current="page">Ideas</a>
+</nav>
+<details class="contents" open><summary>On this page</summary>
+<nav class="nav" aria-label="Sections">
+<a href="#preamble"><span class="num">00</span>How to read this</a>
+<a href="#convert"><span class="num">01</span>Convert</a>
+<a href="#edit"><span class="num">02</span>Update and delete</a>
+<a href="#thread"><span class="num">03</span>Thread</a>
+<a href="#stat"><span class="num">04</span>Stat and sample</a>
+<a href="#lint"><span class="num">05</span>Lint</a>
+<a href="#witness"><span class="num">06</span>Witness</a>
+<a href="#text"><span class="num">07</span>Dialect and exorcist</a>
+<a href="#graph"><span class="num">08</span>The social life of a base</a>
+<a href="#marks"><span class="num">09</span>Marks left by software</a>
+<a href="#crooked"><span class="num">10</span>The crooked shelf</a>
+<a href="#toys"><span class="num">11</span>Toys</a>
+<a href="#agents"><span class="num">12</span>Agents</a>
+<a href="#order"><span class="num">13</span>If only three get built</a>
+</nav>
+</details>
+</div></aside>
+<main>
+<p class="eyebrow">Old ideas. Fresh trouble.</p>
+<p class="command">not a command</p>
+<h1>Things ftnt could grow into.</h1>
+<p class="hero-lead">A pile of proposals. The six commands stay as they are until one of these is chosen on purpose.</p>
+
+<section class="guide-section" id="preamble">
+<div class="section-title"><span>00</span><h2>How to read this</h2></div>
+<p>Each idea is a separate command, or an explicit refusal to add one. Pipes stay the composition tool. A command either reads a base, writes a base, or filters text. Mixing those in one invocation is how a tidy tool becomes a tosser.</p>
+<p>Nothing here is scheduled. The crooked shelf and the toys are included because a boring shortlist hides the interesting edges. Shipping a toy would be a decision, not a joke that leaked into <code>--help</code>.</p>
+<p>Constraints that already exist, and that every idea below has to live with:</p>
+<ul class="contract-list">
+<li>Bases are offline. GoldED and every other user are closed first. A lock is not a promise of safe sharing.</li>
+<li>Format packages own bytes, locks, encoding and rollback. The CLI does not grow a second serializer.</li>
+<li><code>write</code> input is not an export envelope. Dates, addresses and control lines keep the rules they have now.</li>
+<li>Export is data, not a byte-identical backup. Reply links are not repaired on the way in.</li>
+<li><code>repair</code> stays opt-in. Import and export do not quietly heal text.</li>
+<li>Opus dates, and any write GoldED is expected to open afterwards, stay unverified until someone actually does that.</li>
+</ul>
+</section>
+
+<section class="guide-section" id="convert">
+<div class="section-title"><span>01</span><h2>Convert</h2></div>
+<h3 class="proposal"><code>ftnt convert SRC DST --to squish</code></h3>
+<p>The hole people will fill with a shell script. <code>export</code> prints an envelope. <code>write</code> refuses envelopes. Dates that are legal in JAM are illegal in Opus, and Squish demands a timezone the MSG writer will not take. A script that strips fields and hopes is how a fixture quietly loses a MSGID.</p>
+<p><code>--from</code> is optional. Without it, convert tastes <code>SRC</code> and chooses the reader. The taste is the files that are actually there, not a guess at the contents of a random byte:</p>
+<ul class="contract-list">
+<li>JAM when the <code>.JHR</code>, <code>.JDT</code> and <code>.JDX</code> companions are present.</li>
+<li>Squish when the <code>.SQD</code> and <code>.SQI</code> companions are present.</li>
+<li>Hudson when <code>MSGHDR.BBS</code>, <code>MSGIDX.BBS</code> and <code>MSGTXT.BBS</code> are present in that directory.</li>
+<li>A <code>.MSG</code> directory when it contains numbered <code>.MSG</code> files and none of the sets above.</li>
+</ul>
+<p>Two smells at once is a refusal, exit 2, naming both. A directory that is both a JAM base and a pile of <code>.MSG</code> files does not get a silent preference. <code>--from</code> is how you break that tie, and how you override a taste you do not believe.</p>
+<p>Opus and FTSC are the smell the directory cannot settle. Both are numbered <code>.MSG</code> files. The header difference is inside the file, and a confident Opus-versus-FTSC guess would be a second parser living in the CLI. A <code>.MSG</code> directory therefore tastes as <code>msg</code>. <code>--from opus</code> is required when the headers are Opus. Getting that wrong is a bad read, so the plan printed before <code>--apply</code> repeats the chosen source format in a form you can stop.</p>
+<p><code>--to</code> stays required. The destination often does not exist yet, and an empty path has nothing to taste. Tasting <code>DST</code> when it already has a base is a later refinement, and only as a check that <code>--to</code> agrees with what is already there. A disagreement refuses. Convert does not switch destination format because the old files looked like JAM.</p>
+<p><code>convert</code> reads with the source reader and appends through the destination writer, one message at a time, same as <code>write</code>: structural rejection before the writer opens, then one commit per message, then a receipt. It does not stream the envelope through stdout and back through stdin. The translation is the command.</p>
+<p>Before the first append it prints a plan on stderr, not a success: which fields will be dropped, which dates will be rewritten, which messages it already knows it must refuse. <code>--apply</code> is what actually writes. Without <code>--apply</code> the destination is not created and not opened for write. That is the whole safety model. A convert you cannot preview will be run twice, and the second run duplicates the base.</p>
+<p>Refusal rules worth keeping:</p>
+<ul class="contract-list">
+<li>Hudson still needs <code>--board</code> on the side that is a single board. Converting a whole Hudson file onto one board without saying so is a way to merge areas by accident.</li>
+<li>A message whose date cannot be represented is skipped and counted, or the command stops. The choice is a flag, default stop. Silent skip is a data loss bug with a progress bar.</li>
+<li>Control lines the destination writer will discard are named in the plan. Unknown controls are not renamed into something familiar.</li>
+<li>Message numbers are the destination’s numbers. Reply links that pointed at source numbers are either dropped or rewritten only when the source number was actually copied and the map is complete. A half-rewritten thread is worse than a thread with no links.</li>
+<li>No packet, no area file, no routing. Convert moves a base. It does not enter a netmail into a network.</li>
+</ul>
+<p>The interesting version of the receipt is a map: source identity, destination identity, and a list of dropped field names. That map is what a later <code>witness</code> would hash.</p>
+</section>
+
+<section class="guide-section" id="edit">
+<div class="section-title"><span>02</span><h2>Update and delete</h2></div>
+<p>Append-only is why <code>write</code> is allowed to be simple. The moment a command can replace or remove a message, a rerun is no longer “maybe a duplicate”. It can destroy the only copy.</p>
+<h3 class="proposal"><code>ftnt update BASE MSGNO --format jam</code></h3>
+<p>Stdin is the same object <code>write</code> accepts, plus the revision <code>read --revision</code> already prints. The writer open uses that revision. A mismatch is exit 5, and the base is unchanged. No revision flag, no update. Guessing “the current message” from a number alone is how two scripts edit message 12 and the second one wins without noticing.</p>
+<p>The command does not invent fields the writer cannot store. It does not offer a patch language. A jq edit of the <code>read --revision</code> object, stripped back to write fields, piped into <code>update</code>, is the workflow. Teaching <code>update</code> its own edit syntax would split the JSON contract in two.</p>
+<h3 class="proposal"><code>ftnt delete BASE MSGNO --format jam --revision DIGEST</code></h3>
+<p>One message. The revision is required, same conflict rule. Stdout is a receipt with the identity that was removed, not the body. The body is not echoed “so you can undo”: that encourages people to treat stderr scrolls as backups.</p>
+<p>There is no <code>delete --all</code>, no range, no “older than”. Ranges feel like housekeeping and behave like a bad evening. A loop in the shell can delete ten messages and can also be reviewed.</p>
+<p>Soft delete, a kludge tombstone, a <code>Deleted</code> flag: only if the format package already has that operation. The CLI should not stuff a synthetic <code>^ADELETED</code> into a body and call it gone. GoldED will show it as a message, which is the opposite of gone.</p>
+</section>
+
+<section class="guide-section" id="thread">
+<div class="section-title"><span>03</span><h2>Thread</h2></div>
+<h3 class="proposal"><code>ftnt thread BASE MSGNO --format jam</code></h3>
+<p>Follow reply links from one message and write the thread as ordinary message envelopes, in an order that can be read aloud: root first, then replies. Cycles are reported and broken. Missing numbers are reader issues on stderr, not invented placeholder messages.</p>
+<p>This is a read. It does not rewrite <code>reply_to_msgno</code> to “fix” a thread, and it does not run during <code>write</code>. The specification already refuses an automatic link resolver on import. Thread view is the part people actually want. Link repair is the part that corrupts history while feeling helpful.</p>
+<p>Two orders are enough. <code>--walk reply</code> follows the chain the writer stored. A second mode can group by subject only when asked, and it must say that subject grouping is a guess. Mixing them by default produces a thread that never existed.</p>
+<p>Hudson uses <code>--board</code>. A thread that jumps boards is out of scope until the reader exposes that jump as data. Inventing cross-board threads from subject lines is folklore.</p>
+</section>
+
+<section class="guide-section" id="stat">
+<div class="section-title"><span>04</span><h2>Stat and sample</h2></div>
+<h3 class="proposal"><code>ftnt stat BASE --format hudson</code></h3>
+<p>One JSON object: format, resolved path, message count, lowest and highest number, and for Hudson the board numbers that actually occur. Optional, if the format package already exposes it: whether the base looks locked, and the lastread value. If the package does not expose lastread, the field is absent. A zero invented by the CLI is a lie a GoldED user will trust.</p>
+<p>No per-message dump. That is <code>export</code>. <code>stat</code> is the thing you run before deciding an export is worth opening.</p>
+<h3 class="proposal"><code>ftnt sample --format opus</code></h3>
+<p>Writes one minimal valid <code>write</code> object to stdout and exits. The date matches the format: naive for MSG and Hudson, timezone-aware for Squish, even seconds inside 1980–2069 for Opus. Names are obviously fake. The body says it is a sample.</p>
+<p>This is the command that keeps the date table from being folklore in the manual. <code>sample --format squish | ftnt write ./area --format squish</code> should work on a base <code>create</code> just made. If it does not, the sample is wrong, not the user.</p>
+</section>
+
+<section class="guide-section" id="lint">
+<div class="section-title"><span>05</span><h2>Lint</h2></div>
+<h3 class="proposal"><code>ftnt lint BASE --format msg</code></h3>
+<p><code>export --archive</code> already continues past reader trouble and uses exit 7. Lint is the version aimed at a human who is not trying to save the messages. Stdout is one JSON object per finding. The base is not copied anywhere.</p>
+<p>Findings that are worth the command, because they are tedious by hand and unambiguous:</p>
+<ul class="contract-list">
+<li>Reader issues, the same objects archive mode already emits.</li>
+<li>Duplicate <code>MSGID</code> values, listed with both message numbers.</li>
+<li>Reply links whose target number is not in the base.</li>
+<li><code>posted_at</code> in the future relative to the clock the command is running on, and dates parked on the Opus epoch because a writer stored zeros.</li>
+<li>Odd seconds on a base that claims to be Opus. That is a fact about the stored words, not a verdict that GoldED will reject the file.</li>
+<li>A <code>CHRS</code> kludge naming a charset <code>decode</code> does not know.</li>
+</ul>
+<p>Findings that should stay out, because they are taste: subject length, “too many seen-by”, empty bodies, messages to “All”. A linter that scolds echomail for looking like echomail will be ignored, and then so will the real findings.</p>
+<p>Exit 0 when there are no findings, 7 when there are, same shape as archive export. Lint does not “fix” any of them.</p>
+</section>
+
+<section class="guide-section" id="witness">
+<div class="section-title"><span>06</span><h2>Witness</h2></div>
+<h3 class="proposal"><code>ftnt witness BASE --format jam</code></h3>
+<p>A content hash of the export, not of the files. One JSON object: count, first and last number, and a digest over the canonical JSON of each envelope in number order. Paths are excluded from the digest. A witness that changes because you moved the directory is useless as a fixture check.</p>
+<p>The point is regression for the format packages. Read a known base, store the witness next to the fixture, fail a test when a parser change alters text, kludges or dates. It is not a signature, not a MAC, and not a statement that two witnesses from different formats should match. Convert is lossy. Witnesses make the loss visible. They do not forbid it.</p>
+<p>Canonical JSON has to be specified once: key order, UTF-8, no insignificant whitespace, dates already in the reader’s ISO form. If two versions of <code>witness</code> disagree about key order, every fixture looks corrupted.</p>
+</section>
+
+<section class="guide-section" id="text">
+<div class="section-title"><span>07</span><h2>Dialect and exorcist</h2></div>
+<h3 class="proposal"><code>ftnt dialect BASE --format msg</code></h3>
+<p>Report, per message, the charset the reader used and the <code>CHRS</code> kludge if one is present, when those two disagree. Optionally run <code>decode</code>’s strict decoder on the stored body bytes when the format package can hand those bytes over without the CLI reimplementing the frame. If it cannot, the finding says “kludge only” and stops. Guessing the original code page from Unicode is <code>repair</code>, and dialect must not call it.</p>
+<h3 class="proposal"><code>ftnt exorcist BASE --format jam</code></h3>
+<p>The dry run of <code>repair</code> across every <code>body_text</code>. For each message where the heuristic would change something, emit the number, <code>changed</code>, <code>confidence</code>, and a short unified diff of the body. Write nothing. Confidence stays a number from 0 to 1.</p>
+<p>A <code>--apply</code> that writes the repaired bodies back is a different command and a worse idea. It would hide the original bytes inside a format that may not be able to store them again, and it would make every later export look like the base had always been UTF-8. If apply is ever built, it belongs behind <code>update</code>’s revision check, one message at a time, after a human has read the diff. Exorcist itself never grows <code>--apply</code>.</p>
+</section>
+
+<section class="guide-section" id="graph">
+<div class="section-title"><span>08</span><h2>The social life of a base</h2></div>
+<p>These are reads over the same envelopes <code>export</code> already produces. They earn a command only because the jq to do them is ugly and easy to get wrong. If the implementation is “export, then compute”, that is a feature. The CLI should not walk the binary twice with a second parser.</p>
+<h3 class="proposal"><code>ftnt orphans BASE --format squish</code></h3>
+<p>Messages whose reply link points at a number the base does not have, plus messages that nothing points at, if you pass <code>--roots</code>. Roots are not errors. A base full of new posts is mostly roots. The default output is the broken links only.</p>
+<h3 class="proposal"><code>ftnt gossip BASE --format jam</code></h3>
+<p>A histogram: who is addressed, who writes, which message numbers have the most replies, counted from stored links and not from “Re:” in the subject. Output is JSONL, smallest first or a <code>--top</code> cut. This is nosy and genuinely useful when you are trying to understand a borrowed echo before you convert it.</p>
+<h3 class="proposal"><code>ftnt haunt BASE --format msg --quiet-since 1998-01-01</code></h3>
+<p>Addresses, nodes and points that appear in from-address or seen-by and whose newest message is older than the given date. It is a census of who stopped talking, not a routing table and not a suggestion to remove them. Seen-by lines from 1994 are historical. Deleting them to “clean” a base is vandalism with a sort key.</p>
+<p>The command needs a real clock date on the CLI, and it must document the timezone it compares in. A haunt that treats naive MSG dates as local time on the machine running the command will accuse Danes and Californians of different ghosts.</p>
+</section>
+
+<section class="guide-section" id="marks">
+<div class="section-title"><span>09</span><h2>Marks left by software</h2></div>
+<h3 class="proposal"><code>ftnt baggage BASE --format msg</code></h3>
+<p>Decode <code>attributes_raw</code> into flag names, but only names the core package already defines. Unknown bits stay as bit numbers. The CLI does not invent a friendlier vocabulary than the library. One row per message that has any flag set, plus a summary count. Private, crash, hold, file-attach and the rest are data. Baggage does not filter them out “for privacy”. If you export a base of private netmail, you already chose to read it.</p>
+<h3 class="proposal"><code>ftnt origin BASE --format jam</code></h3>
+<p>Collect <code>MSGID</code>, <code>PID</code>, <code>TID</code> and tearline or origin lines when the reader has already split them into control lines or body text. Count them. The output is “GoldED 1.2.5 wrote 400 of these, unknown tearlines wrote 12”, which is the fastest way to learn whether a fixture is one program’s habit or a mess from six eras.</p>
+<p>Do not scrape the body with a new regex if the reader already produced a control line. Two notions of “the origin line” will disagree in the one case you cared about.</p>
+</section>
+
+<section class="guide-section" id="crooked">
+<div class="section-title"><span>10</span><h2>The crooked shelf</h2></div>
+<p>Useful, a bit unwise, and each one needs a written reason to exist before any code.</p>
+<h3 class="proposal"><code>ftnt carbon</code></h3>
+<p>Copy one message onto another Hudson board, or into another base, as a new append. It is <code>convert</code> for a single identity. The temptation is a <code>--keep-number</code> flag. Refuse it. Numbers are a property of the destination. Keeping them is how collisions get a command-line switch.</p>
+<h3 class="proposal"><code>ftnt shrink</code></h3>
+<p>Read write-shaped JSON on stdin and emit a smaller object that <code>write</code> would still accept: drop empty arrays, drop nulls, optionally drop seen-by and path when <code>--no-routing</code> is set. This is a fixture tool. Point it at a live base and you have a way to launder routing history. The help text should say “fixtures”, and the command should refuse a <code>--format</code> base path so it cannot be aimed at mail.</p>
+<h3 class="proposal"><code>ftnt curfew</code></h3>
+<p>A wrapper that refuses <code>write</code> when the payload breaks a format’s date rule, with a ruder message than the writer’s exception. This is only worth it if <code>sample</code> and <code>write</code>’s existing errors are still confusing after the manual. A second error string for the same rejection is clutter. A curfew that encodes policy the writer does not enforce is a bug. Opus even-seconds belong in the writer, where they already are.</p>
+<h3 class="proposal"><code>ftnt adopt DIR --format msg</code></h3>
+<p>A directory of loose <code>.MSG</code> files is already what the MSG reader may mean by a base. Adopt is interesting only for a directory of text files that are not a base: one file per message, headers in a documented subset, bodies after a blank line. That is a new parser in the CLI. It violates the rule that format packages own serialization, unless the core grows an import for that text shape first. Without that, adopt is a tosser larval stage. Fun to describe, bad to start.</p>
+<h3 class="proposal"><code>ftnt duel A.jsonl B.jsonl</code></h3>
+<p>Diff two exports that are already on disk. No base is opened. Compare by <code>MSGID</code> when both sides have one, else by number, and say which key was used. Field-level changes only: from, to, subject, date, body, controls. A duel that tries to be semantic (“these two bodies mean the same”) has become <code>repair</code> in a trench coat.</p>
+<p>This one is crooked only because it does not need <code>ftnt</code>. A small program beside the manual would do. It earns a command if witnesses and converts start producing files people diff every day.</p>
+</section>
+
+<section class="guide-section" id="toys">
+<div class="section-title"><span>11</span><h2>Toys</h2></div>
+<p>These do not belong in the default help. They are here so the idea has been had, and declined, in writing.</p>
+<h3 class="proposal"><code>ftnt modem</code></h3>
+<p>Prints a connection banner, a baud rate it did not negotiate, and <code>NO CARRIER</code>, then exits 0 without reading stdin or touching a path. The entire point is that the command is obviously not a base tool. The risk is that someone asks for <code>--dial</code> next. If it ever exists, it lives behind an environment variable named something embarrassing, and it has no flags.</p>
+<h3 class="proposal"><code>ftnt sysop</code></h3>
+<p>Rewrites diagnostics in the voice of a tired sysop. “Message 12 is not here. It may have been on the other BBS.” Exit codes stay numeric and stable. The joke is only the sentence. The failure mode is translating that sentence, or having scripts match it. So the sentence stays on stderr beside the real error, never instead of it, and <code>--sysop</code> would be the flag on existing commands rather than a new parser. Even that is probably one flag too many.</p>
+<h3 class="proposal"><code>ftnt weather ZONE:NET/NODE</code></h3>
+<p>Looks at an exported base and reports how long ago that address last spoke, which echoes it still appears in, and whether its clock seems to live in 1980. It is <code>haunt</code> for one node, dressed as a forecast. “Node 2:236/77: overcast, last seen 400 days ago, chance of a PID from GoldED.” Genuinely charming for a blog post. A bad idea in the same binary as <code>delete</code>, because the name does not say it is read-only and people will type addresses at it expecting the network to answer.</p>
+<h3 class="proposal"><code>ftnt palimpsest</code></h3>
+<p>Show every revision a message has ever had. The libraries store a revision for what is there now, not a stack of former bodies. Unless a format package grows a history, palimpsest can only print the current revision and a note that there is no earlier layer. That note is the whole command. Shipping it would advertise a memory the base does not have.</p>
+</section>
+
+<section class="guide-section" id="agents">
+<div class="section-title"><span>12</span><h2>Agents</h2></div>
+<p><code>ftnt heads</code>, <code>ftnt catalog</code> and <code>--json-errors</code> are built. The retry flag below is still a proposal.</p>
+<p>An agent is a caller with a small context window, no patience for <code>--help</code>, and a habit of retrying. The commands are already close: JSON on stdout, stable exit codes, no prompts. <code>heads</code> looks around without dragging every body into the prompt. <code>catalog</code> is the contract for the binary that is running.</p>
+<h3 class="proposal"><code>ftnt heads BASE --format jam</code></h3>
+<p>One JSON object per message, in number order, with the body left out. Enough to choose: <code>msgno</code>, from, to, subject, <code>posted_at</code>, board, a byte length for <code>body_text</code>, and <code>MSGID</code> when the reader already parsed one. Nothing else. The agent then calls <code>read</code> for the one number it actually needs, or <code>read --body</code> when it only wants the text.</p>
+<p><code>export</code> is the wrong tool for that first look. A busy echo will spend the window on seen-by lines and signatures before the agent has decided which message mattered. <code>heads</code> is allowed to be lossy. It is an index, not an archive, and it says so by what it omits.</p>
+<p><code>--limit</code> and <code>--after MSGNO</code> keep a long base pageable. The default limit should be finite. An agent that asks for “the base” should not be handed ten thousand subjects in one pipe unless it passed <code>--limit 0</code> on purpose. Exit status matches <code>export</code>: 0 for a complete index, 7 if archive-style reader issues were collected under <code>--archive</code>.</p>
+<h3 class="proposal"><code>ftnt catalog</code></h3>
+<p>One JSON document, no base, no stdin. It describes the tool the running binary actually is: program version, schema version, the commands and their flags, the write object’s fields, the date rule per format, the exit codes, and the file sets <code>convert</code> would taste. An agent reads this once per version instead of scraping help text that will be reworded.</p>
+<p>The catalog is generated from the same parser and the same tables the commands use. A hand-written brochure will drift the first time Opus even-seconds change. If <code>sample --format opus</code> and the catalog disagree, the catalog is the bug.</p>
+<p>It does not include prose from this page. Proposals are not capabilities. A command listed in the catalog exists and behaves. <code>heads</code> appears there only after it is real.</p>
+<h3 class="proposal"><code>ftnt</code> errors as objects</h3>
+<p>Today a failure is a sentence on stderr and an integer. Exit 4 means several different rejections. An agent can branch on 2, 3, 5, 6 and 7. It cannot branch on “odd second” versus “unknown charset” without reading English.</p>
+<p>When stderr is not a terminal, or when <code>--json-errors</code> is set, each failure is one JSON object: <code>schema_version</code>, <code>type: error</code>, a stable string <code>code</code>, the exit status, <code>input_record</code> and <code>committed</code> when a write has those, and the same sentence a human sees in <code>message</code>. The sentence may change. The <code>code</code> may not, within a major version. Codes stay specific and few: <code>input.structure</code>, <code>input.date</code>, <code>input.charset</code>, <code>base.missing</code>, <code>base.exists</code>, <code>message.missing</code>, <code>lock.timeout</code>, <code>revision.conflict</code>, <code>writer.rejected</code>, <code>reader.failed</code>, <code>io.failed</code>.</p>
+<p>Stdout is untouched. A write that committed two messages and then failed still prints two receipts, then the error object. Scripts that only understood the integer keep working. Scripts that parse stderr sentences will break if the default becomes JSON, so the default stays prose on a terminal and the JSON form is the switch an agent turns on.</p>
+<h3 class="proposal">Retries</h3>
+<p>The dangerous agent habit is running <code>write</code> again after a broken pipe or a timeout. The receipt may have been lost and the message stored. <code>external_id</code> is already the MSGID. A <code>--skip-existing-msgid</code> on <code>write</code> and on <code>convert --apply</code> makes the retry boring: if that MSGID is already in the destination, print a receipt with <code>skipped: true</code> and do not append. Absent MSGID, absent skip. The command does not invent an idempotency key the message did not carry.</p>
+<p>That flag is the agent feature most likely to surprise a human who wanted two copies of the same netmail. It stays off unless named. <code>catalog</code> documents the default.</p>
+</section>
+
+<section class="guide-section" id="order">
+<div class="section-title"><span>13</span><h2>If only three get built</h2></div>
+<p><code>sample</code> first. It is small, it locks the date rules to something you can run, and it makes every later example honest.</p>
+<p><code>convert</code> second, preview before <code>--apply</code>, because that is the workflow the six commands almost provide and deliberately do not.</p>
+<p><code>update</code> third, revision required, because append-only stops being enough the first time a fixture needs a corrected kludge. <code>delete</code> can wait until update exists and the receipt style is already boring.</p>
+<p>Lint, thread, stat and witness are the next shelf. They are reads, they compose with what export already means, and they are hard to regret. For an agent caller, <code>heads</code> and <code>catalog</code> belong on that same shelf: one lets it see the base, the other lets it see the tool. The crooked shelf waits. The toys stay on this page.</p>
+</section>
+</main>
+</div></div>
+<footer><span>GoldED FTN tools / GoldED.dev</span><span>PROPOSALS · NOT IMPLEMENTED</span></footer>
+</div>
+<script>
+const contents=document.querySelector('.contents');
+if(contents && window.matchMedia('(max-width:800px)').matches) contents.open=false;
+const links=[...document.querySelectorAll('.nav a')];
+const sections=[...document.querySelectorAll('main section')];
+function markSection(id){
+  for(const link of links){
+    if(link.hash === '#' + id) link.setAttribute('aria-current','location');
+    else link.removeAttribute('aria-current');
+  }
+}
+function track(){
+  if(!sections.length) return;
+  let current=sections[0].id;
+  for(const section of sections){
+    if(section.getBoundingClientRect().top <= 120) current=section.id;
+  }
+  const page=document.scrollingElement;
+  if(page.scrollHeight > page.clientHeight &&
+     Math.ceil(page.scrollTop + page.clientHeight) >= page.scrollHeight - 2){
+    current=sections[sections.length - 1].id;
+  }
+  markSection(current);
+}
+window.addEventListener('scroll', track, {passive:true});
+window.addEventListener('resize', track);
+window.addEventListener('hashchange', () => {
+  const selected=links.find(link => link.hash === window.location.hash);
+  if(selected) markSection(selected.hash.slice(1));
+  else track();
+});
+track();
+</script>
+</body>
+</html>

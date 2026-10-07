@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Append JSON messages to an FTN base with ftnt write.">
+<title>ftnt write</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip" href="#usage">Skip to content</a>
+<div class="page">
+<header class="masthead">
+<a class="logo-mark" href="index.html" aria-label="FTNT home">
+<img class="logo" src="assets/golded-logo.png" width="600" height="205" alt="GoldED">
+<span class="logo-subtitle" aria-hidden="true">for the shell</span>
+</a>
+<div><span>FTNT💥</span><a href="https://golded-dev.github.io/golded-ftn-python-docs/">Library docs ↗</a></div>
+</header>
+<div class="shell">
+<div class="bar"><span>GOLDED / FTN TOOLS</span><span>LOCAL IMPLEMENTATION · NOT RELEASED · PYTHON 3.12+</span></div>
+<div class="layout">
+<aside><div class="sidebar">
+<nav class="page-nav" aria-label="Manual"><a href="index.html">Home</a><a href="create.html">create</a><a href="write.html" aria-current="page">write</a><a href="read.html">read</a><a href="export.html">export</a><a href="decode.html">decode</a><a href="repair.html">repair</a><a href="heads.html">heads</a><a href="catalog.html">catalog</a></nav>
+<details class="contents" open><summary>On this page</summary><nav class="nav" aria-label="Sections"><a href="#usage"><span class="num">00</span>Usage</a><a href="#input"><span class="num">01</span>Input object</a><a href="#receipts"><span class="num">02</span>Receipts and reruns</a></nav></details>
+</div></aside>
+<main><p class="eyebrow">JSON in. One commit each.</p><p class="command">ftnt write</p><h1>Append messages from JSON.</h1><p class="hero-lead">One object, or a JSONL batch. Validation finishes before the first append.</p><section class="guide-section" id="usage"><div class="section-title"><span>00</span><h2>Usage</h2></div><p><code>ftnt write BASE --format FORMAT [options]</code></p><p>Reads one JSON object from stdin and appends it. <code>--jsonl</code> reads one JSON value per line and appends each value as its own message. Structural checks finish before the writer opens. Each successful append commits on its own and prints a receipt.</p><div class="code-pane" id="write-one"><div class="code-head"><span>append one message</span><button type="button" data-copy="write-one-text" hidden>Copy code</button></div><pre><code id="write-one-text">ftnt write ./fixtures/general --format jam &lt; examples/message.json
+</code></pre></div><div class="code-pane" id="write-jsonl"><div class="code-head"><span>append a batch</span><button type="button" data-copy="write-jsonl-text" hidden>Copy code</button></div><pre><code id="write-jsonl-text">ftnt write ./fixtures/general --format jam --jsonl &lt; examples/messages.jsonl
+</code></pre></div><p>Options:</p><div class="table-wrap"><table><thead><tr><th>Option</th><th>Default</th><th>Meaning</th></tr></thead><tbody><tr><td><code>--jsonl</code></td><td>off</td><td>Read a JSONL batch. Without it, the whole stdin value is one object.</td></tr><tr><td><code>--encoding</code></td><td><code>CP850</code></td><td>Charset the writer stores.</td></tr><tr><td><code>--lock-timeout</code></td><td><code>5</code></td><td>Seconds to wait for the lock. A finite number, zero or greater.</td></tr><tr><td><code>--board</code></td><td>required for Hudson</td><td>Hudson board, 1..200. Rejected for every other format.</td></tr></tbody></table></div></section><section class="guide-section" id="input"><div class="section-title"><span>01</span><h2>Input object</h2></div><p>Required strings: <code>from_name</code>, <code>to_name</code>, <code>subject</code>, <code>body_text</code>. Empty strings pass the structural check; the format writer may still reject them.</p><div class="table-wrap"><table><thead><tr><th>Field</th><th>JSON</th><th>When omitted</th></tr></thead><tbody><tr><td><code>external_id</code></td><td>string or null</td><td>null. This is an external MSGID, not a message number in the base.</td></tr><tr><td><code>from_address</code>, <code>to_address</code></td><td>FTN address string or null</td><td>null. Example: <code>2:236/77.1@fidonet</code>. Abbreviated forms are not expanded.</td></tr><tr><td><code>posted_at</code></td><td>datetime string or null</td><td>null. Omitted dates are not filled with the current time.</td></tr><tr><td><code>attributes_raw</code></td><td>integer ≥ 0 or null</td><td>null</td></tr><tr><td><code>control_lines</code></td><td>array of objects</td><td>empty. Each object needs string <code>name</code> and <code>value</code>. Optional <code>raw</code> defaults to an empty string.</td></tr><tr><td><code>reply_to_msgno</code>, <code>reply1st_msgno</code>, <code>reply_next_msgno</code></td><td>integer ≥ 0 or null</td><td>null</td></tr><tr><td><code>reply_list</code></td><td>array of integers ≥ 0</td><td>empty</td></tr><tr><td><code>routing_seen_by</code>, <code>routing_path</code></td><td>array of strings</td><td>empty. Order and duplicates are kept.</td></tr></tbody></table></div><p>Unknown keys, duplicate keys, NaN, Infinity, a BOM and invalid UTF-8 are rejected. Booleans are not integers. <code>msgno</code>, <code>identity</code>, <code>revision</code> and export envelopes are not write input. Append assigns the message number. There is no automatic reply-link resolver.</p><div class="code-pane" id="write-message"><div class="code-head"><span>examples/message.json</span><button type="button" data-copy="write-message-text" hidden>Copy code</button></div><pre><code id="write-message-text">{
+  &quot;from_name&quot;: &quot;Alice&quot;,
+  &quot;to_name&quot;: &quot;Bob&quot;,
+  &quot;subject&quot;: &quot;Encoding fixture: æøå&quot;,
+  &quot;body_text&quot;: &quot;First line.\nSecond line. Temperature: 20 °C.&quot;,
+  &quot;external_id&quot;: &quot;2:236/77 fixture-001&quot;,
+  &quot;from_address&quot;: &quot;2:236/77&quot;,
+  &quot;to_address&quot;: &quot;2:236/78&quot;,
+  &quot;posted_at&quot;: &quot;2026-01-01T12:00:00&quot;,
+  &quot;attributes_raw&quot;: 0,
+  &quot;control_lines&quot;: [{&quot;name&quot;: &quot;CHRS&quot;, &quot;value&quot;: &quot;CP850 2&quot;}]
+}
+</code></pre></div><p><code>posted_at</code> is <code>YYYY-MM-DDTHH:MM:SS</code> with an optional <code>Z</code> or numeric UTC offset, and no microseconds. Invalid calendar dates are rejected. The timezone rule depends on the format:</p><div class="table-wrap"><table><thead><tr><th>Format</th><th>Date</th></tr></thead><tbody><tr><td><code>msg</code></td><td>Naive. No timezone.</td></tr><tr><td><code>opus</code></td><td>Naive, years 1980–2069, even seconds. Odd seconds are rejected. GoldED interoperability for Opus writes is still unverified.</td></tr><tr><td><code>jam</code></td><td>Naive, read as UTC, or timezone-aware.</td></tr><tr><td><code>squish</code></td><td>Timezone-aware. The writer converts it to UTC.</td></tr><tr><td><code>hudson</code></td><td>Naive. No timezone.</td></tr></tbody></table></div><div class="code-pane" id="write-squish"><div class="code-head"><span>examples/message-squish.json</span><button type="button" data-copy="write-squish-text" hidden>Copy code</button></div><pre><code id="write-squish-text">{
+  &quot;from_name&quot;: &quot;Alice&quot;,
+  &quot;to_name&quot;: &quot;Bob&quot;,
+  &quot;subject&quot;: &quot;Encoding fixture: æøå&quot;,
+  &quot;body_text&quot;: &quot;First line.\nSecond line. Temperature: 20 °C.&quot;,
+  &quot;external_id&quot;: &quot;2:236/77 fixture-001&quot;,
+  &quot;from_address&quot;: &quot;2:236/77&quot;,
+  &quot;to_address&quot;: &quot;2:236/78&quot;,
+  &quot;posted_at&quot;: &quot;2026-01-01T12:00:00+00:00&quot;,
+  &quot;attributes_raw&quot;: 0,
+  &quot;control_lines&quot;: [
+    {
+      &quot;name&quot;: &quot;CHRS&quot;,
+      &quot;value&quot;: &quot;CP850 2&quot;
+    }
+  ]
+}
+</code></pre></div></section><section class="guide-section" id="receipts"><div class="section-title"><span>02</span><h2>Receipts and reruns</h2></div><p>A receipt is one JSON object per committed append:</p><div class="code-pane" id="write-result"><div class="code-head"><span>write_result</span><button type="button" data-copy="write-result-text" hidden>Copy code</button></div><pre><code id="write-result-text">{&quot;schema_version&quot;:1,&quot;type&quot;:&quot;write_result&quot;,&quot;input_record&quot;:1,&quot;identity&quot;:{&quot;format&quot;:&quot;jam&quot;,&quot;base&quot;:&quot;/resolved/fixtures/general&quot;,&quot;msgno&quot;:1,&quot;board&quot;:null},&quot;revision&quot;:{&quot;identity&quot;:{&quot;format&quot;:&quot;jam&quot;,&quot;base&quot;:&quot;/resolved/fixtures/general&quot;,&quot;msgno&quot;:1,&quot;board&quot;:null},&quot;location&quot;:[0,0],&quot;digest&quot;:&quot;opaque&quot;}}
+</code></pre></div><p><code>input_record</code> counts from 1 in the batch. <code>identity</code> and <code>revision</code> describe what the writer stored. Treat <code>location</code> and <code>digest</code> as opaque. They belong to that base, not to a portable id.</p><p>If record 3 fails after record 1 and 2 committed, those two messages stay. Stderr names the failing record and the committed count. A broken pipe can hide a receipt for a message that is already stored. Running the same batch again can append duplicates.</p></section></main>
+</div></div>
+<footer><span>GoldED FTN tools / GoldED.dev</span><span>LOCAL IMPLEMENTATION · MIT LICENSE</span></footer>
+</div>
+
+<script>
+const contents=document.querySelector('.contents');
+if(contents && window.matchMedia('(max-width:800px)').matches) contents.open=false;
+for(const button of document.querySelectorAll('[data-copy]')){
+  button.hidden=false;
+  button.addEventListener('click', async () => {
+    const node=document.getElementById(button.dataset.copy);
+    const text=node.textContent;
+    try {
+      if(navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(text);
+      } else {
+        const field=document.createElement('textarea');
+        field.value=text;
+        field.style.position='fixed';
+        field.style.opacity='0';
+        document.body.append(field);
+        field.select();
+        const ok=document.execCommand('copy');
+        field.remove();
+        button.focus();
+        if(!ok) throw new Error('copy');
+      }
+      button.textContent='Copied';
+    } catch {
+      button.textContent='Select code';
+      const range=document.createRange();
+      range.selectNodeContents(node);
+      const selection=window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    setTimeout(() => button.textContent='Copy code', 1800);
+  });
+}
+const links=[...document.querySelectorAll('.nav a')];
+const sections=[...document.querySelectorAll('main section')];
+function markSection(id){
+  for(const link of links){
+    if(link.hash === '#' + id) link.setAttribute('aria-current','location');
+    else link.removeAttribute('aria-current');
+  }
+}
+function track(){
+  if(!sections.length) return;
+  let current=sections[0].id;
+  for(const section of sections){
+    if(section.getBoundingClientRect().top <= 120) current=section.id;
+  }
+  const page=document.scrollingElement;
+  if(page.scrollHeight > page.clientHeight &&
+     Math.ceil(page.scrollTop + page.clientHeight) >= page.scrollHeight - 2){
+    current=sections[sections.length - 1].id;
+  }
+  markSection(current);
+}
+window.addEventListener('scroll', track, {passive:true});
+window.addEventListener('resize', track);
+window.addEventListener('hashchange', () => {
+  const selected=links.find(link => link.hash === window.location.hash);
+  if(selected) markSection(selected.hash.slice(1));
+  else track();
+});
+track();
+</script>
+
+</body>
+</html>

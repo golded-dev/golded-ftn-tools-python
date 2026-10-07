@@ -274,6 +274,80 @@ def export(
     return ExportResult(envelopes(), issues)
 
 
+def heads(
+    format: str,
+    base: Path,
+    *,
+    board: int | None = None,
+    fallback_charset: str = "CP850",
+    archive: bool = False,
+    limit: int = 100,
+    after: int | None = None,
+    on_issue: Callable[[ReaderIssue], None] | None = None,
+) -> ExportResult:
+    """Index messages without body text. limit 0 reads the whole base."""
+    _board(format, board, required=False)
+    if limit < 0:
+        raise ToolError("input.structure", 2, "limit must be zero or positive")
+    if after is not None and after < 0:
+        raise ToolError("input.structure", 2, "after must be zero or positive")
+    resolved = base.resolve()
+    issues = [0]
+
+    def remember(issue: ReaderIssue) -> None:
+        issues[0] += 1
+        if on_issue is not None:
+            on_issue(issue)
+
+    options = ReaderOptions(
+        fallback_charset=fallback_charset,
+        archive_mode=archive,
+        on_issue=remember if archive else None,
+    )
+
+    def rows() -> Iterator[dict[str, object]]:
+        produced = 0
+        try:
+            for message in adapters.reader(format).read(resolved, options):
+                if board is not None and adapters.board_of(message, format) != board:
+                    continue
+                if after is not None and message.msgno <= after:
+                    continue
+                if limit and produced >= limit:
+                    break
+                row: dict[str, object] = {
+                    "schema_version": 1,
+                    "type": "head",
+                    "msgno": message.msgno,
+                    "from_name": message.from_name,
+                    "to_name": message.to_name,
+                    "subject": message.subject,
+                    "posted_at": message.posted_at,
+                    "board": adapters.board_of(message, format),
+                    "body_bytes": len(message.body_text.encode("utf-8")),
+                }
+                controls = message.control_lines
+                if controls is not None and controls.msgid is not None:
+                    row["msgid"] = controls.msgid
+                produced += 1
+                yield row
+        except ToolError:
+            raise
+        except (BrokenPipeError, KeyboardInterrupt):
+            raise
+        except Exception as error:
+            raise classify(error) from error
+
+    return ExportResult(rows(), issues)
+
+
+def catalog() -> dict[str, object]:
+    """Return the description of this binary."""
+    from .catalog import catalog as build_catalog
+
+    return build_catalog()
+
+
 def decode(data: bytes, charset: str) -> str:
     """Decode a whole buffer with the core charset aliases."""
     try:

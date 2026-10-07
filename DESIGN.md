@@ -25,8 +25,9 @@ blue shell and status bar. No gradients, rounded cards or decorative animation.
 | Syntax numbers/constants | #55FF55 |
 
 IBM Plex Sans for text; IBM Plex Mono for labels, numbers and code. Include the
-font license. The standalone HTML embeds fonts and logo; rendering needs no
-network requests. External destination links remain ordinary links.
+font license. Fonts and the logo live in `assets/` and are referenced by
+relative URLs, so a local open needs no network requests. External destination
+links remain ordinary links.
 
 ## Shell and typography
 
@@ -39,7 +40,11 @@ padding. Use the 4/8/12/16/24/32/48/64 scale for new spacing.
 
 Body/intro: 17px/1.65; section text: 15px/1.65. H1: 44px/1.1, weight 600;
 h2: 24px/1.2, weight 500. Yellow section numbers: 20px/1.2, weight 500,
-non-shrinking, baseline-aligned, 12px gap. Eyebrow: “Old messages. New blast radius.”
+non-shrinking, baseline-aligned, 12px gap. Eyebrows are two short sentences,
+same shape as the GoldED library pages: “Old messages. New blast radius.” on
+the front page, then one line per command. The invoked command sits under
+the eyebrow in mono, before the page heading: `ftnt` on the front page and
+`ftnt create` (and the other five) on their pages.
 Balance headings; use pretty paragraph wrapping and macOS font smoothing.
 
 ## Code and navigation
@@ -50,10 +55,10 @@ examples. Copy plain text with original whitespace. Hide buttons without JS
 and in print. Inline code uses a raised surface, 2px/4px padding, 2px corners
 and natural wrapping.
 
-Sidebar: Home, Specification, JSON contract and Implementation plan as HTML
-reading copies, then native On this page details and a library-docs link. The
-landing page sections are Overview 00, Pipes 01, Fixtures 02 and Contract 03.
-The plan has its own numbered section index, starting at Overview 00. Exactly one aria-current=page. Section tracking may
+Sidebar: Home and one link per command (`create`, `write`, `read`, `export`,
+`decode`, `repair`, `heads`, `catalog`), then native On this page details and a library-docs link.
+The public pages do not link to the specification, the plan, or the JSON
+contract notes. Exactly one aria-current=page. Section tracking may
 add aria-current=location; it is distinct from page state.
 Links/disclosure have >=40px height. Focus-visible uses a yellow 2px outline.
 Hover only for fine pointers with hover support. Navigation must work without JS.
@@ -80,11 +85,11 @@ A local Git repository does not authorize a remote, release or Pages deployment.
 Check desktop/mobile in Safari, keyboard focus, disclosure, anchors, copy, no-JS,
 print and local links/HTML structure. Report only what was actually checked.
 
-The landing page embeds the example JSON in a highlighted, copyable code panel.
-Document links open `specification.html`, `json-contract.html` and `plan.html`;
-the files in `docs/` remain the editable Markdown sources. Rebuild
-all reading copies with `scripts/build_reading_pages.py`. They share the shell,
-fonts, palette, navigation behavior and print styles.
+`write.html` embeds `examples/message.json` in a copyable code panel.
+Rebuild the front page and the six command pages with
+`scripts/build_reading_pages.py`. They share `assets/manual.css`, the logo,
+the shell, the palette, navigation behavior and print styles. The Markdown
+files in `docs/` stay maintainer notes and are not part of the public manual.
 
 The tool identity is **FTNT💥**; the executable is `ftnt`. The package remains
 `golded-ftn-tools`, with import name `golded_ftn_tools`. Use the explosion in
