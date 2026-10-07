@@ -32,7 +32,7 @@ raise SystemExit(main(sys.argv[1:]))
 PIPE_PROBE = """
 import sys
 from golded_ftn_tools import cli
-original = cli._json
+original = cli._emit
 def emit(*args, **kwargs):
     try:
         return original(*args, **kwargs)
@@ -40,7 +40,7 @@ def emit(*args, **kwargs):
         if cli._pipe_closed(error):
             raise BrokenPipeError() from error
         raise
-cli._json = emit
+cli._emit = emit
 raise SystemExit(cli.main(sys.argv[1:]))
 """
 
