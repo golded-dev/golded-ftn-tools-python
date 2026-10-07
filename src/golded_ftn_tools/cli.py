@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import math
 import os
 import sys
@@ -251,17 +252,41 @@ def _heads(args: argparse.Namespace) -> int:
     return indexed.exit_status
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    args = parser().parse_args(argv)
+def _pipe_closed(error: OSError) -> bool:
+    if isinstance(error, BrokenPipeError):
+        return True
+    if error.errno in {errno.EPIPE, errno.EINVAL, errno.ECONNRESET, errno.EBADF}:
+        return True
+    return getattr(error, "winerror", None) in {109, 232}
+
+
+def _discard_stdout() -> None:
+    """Point stdout at null so the interpreter's shutdown flush stays quiet."""
     try:
-        return _run(args)
-    except BrokenPipeError:
-        # Avoid a second failure when Python flushes stdout at shutdown.
         null = os.open(os.devnull, os.O_WRONLY)
         try:
             os.dup2(null, sys.stdout.fileno())
         finally:
             os.close(null)
+    except OSError:
+        pass
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = parser().parse_args(argv)
+    try:
+        code = _run(args)
+        try:
+            sys.stdout.flush()
+        except OSError as error:
+            if not _pipe_closed(error):
+                raise
+            _discard_stdout()
+            return 141 if os.name == "posix" else 6
+        return code
+    except BrokenPipeError:
+        # Avoid a second failure when Python flushes stdout at shutdown.
+        _discard_stdout()
         return 141 if os.name == "posix" else 6
     except KeyboardInterrupt:
         print("ftnt: interrupted", file=sys.stderr)
