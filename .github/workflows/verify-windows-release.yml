@@ -24,7 +24,7 @@ jobs:
       - name: Install only public packages
         run: |
           uv venv --python ${{ matrix.python }}
-          uv pip install --no-sources --index-url https://pypi.org/simple golded-ftn-tools==1.0.2 golded-ftn-mcp==1.0.2 pytest
+          uv pip install --refresh --no-sources --index-url https://pypi.org/simple golded-ftn-tools==1.0.2 golded-ftn-mcp==1.0.2 pytest
           uv pip check
       - name: Verify the installed package paths and version
         run: |
