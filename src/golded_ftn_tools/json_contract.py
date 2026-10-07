@@ -14,6 +14,10 @@ from golded_ftn import ControlLine, FtnAddress, OutgoingMessage
 class InputError(ValueError):
     """An input record does not satisfy the CLI contract."""
 
+    def __init__(self, message: str, *, code: str = "input.structure") -> None:
+        super().__init__(message)
+        self.code = code
+
 
 def _pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
     result: dict[str, object] = {}
@@ -91,18 +95,23 @@ def _date(data: dict[str, object], format: str) -> datetime | None:
         )
         is None
     ):
-        raise InputError("posted_at must use YYYY-MM-DDTHH:MM:SS with optional offset")
+        raise InputError(
+            "posted_at must use YYYY-MM-DDTHH:MM:SS with optional offset",
+            code="input.date",
+        )
     # datetime.fromisoformat accepts offset overflow such as +00:99.
     if len(value) == 25 and (int(value[-5:-3]) > 23 or int(value[-2:]) > 59):
-        raise InputError("posted_at has an invalid UTC offset")
+        raise InputError("posted_at has an invalid UTC offset", code="input.date")
     try:
         result = datetime.fromisoformat(value)
     except ValueError as error:
-        raise InputError(str(error)) from error
+        raise InputError(str(error), code="input.date") from error
     if format in {"msg", "opus", "hudson"} and result.tzinfo is not None:
-        raise InputError(f"{format} requires a naive posted_at")
+        raise InputError(f"{format} requires a naive posted_at", code="input.date")
     if format == "squish" and result.tzinfo is None:
-        raise InputError("squish requires a timezone-aware posted_at")
+        raise InputError(
+            "squish requires a timezone-aware posted_at", code="input.date"
+        )
     return result
 
 
