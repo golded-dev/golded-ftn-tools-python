@@ -5,6 +5,25 @@ published `golded-ftn-tools==1.0.1` and public dependencies on native Windows.
 The manual diagnostic workflow passed on CPython 3.12.10 and 3.14.7:
 [run 37669214703](https://github.com/golded-dev/golded-ftn-tools-python/actions/runs/37669214703).
 
+## Published production corrections
+
+The corrections are published as `golded-ftn-jam` 1.2.1,
+`golded-ftn-tools` 1.0.2 and `golded-ftn-mcp` 1.0.2. JAM opens both binary
+files with `O_BINARY` on Windows. Tools handles recognized closed-pipe errors
+at stdout writes/flushes and leaves stdout open after successful calls.
+Ordinary I/O failures retain their error reporting.
+
+Regular CI now includes Windows with Python 3.12 and 3.14. A separate fresh
+installation exclusively from PyPI passed **74 tests, 1 skipped** on each
+Windows version, including committed receipt persistence and actual MCP stdio:
+[run 37673056768](https://github.com/golded-dev/golded-ftn-tools-python/actions/runs/37673056768).
+The skipped test exercises POSIX SIGINT behavior. Imported package paths were
+checked against the installed environment, excluding checkout source imports.
+
+Existing bases corrupted by earlier text-mode writes are not automatically
+repaired. The diagnosis below describes the original released versions and
+process-local probes, before these production corrections.
+
 ## JAM: a binary index opened in text mode
 
 `golded-ftn-jam`'s `JamSession._operation()` opens `.JDT` and `.JDX` using
@@ -45,11 +64,12 @@ errors around the whole command, covering `_emit()` and `_text()`, while
 retaining ordinary I/O errors. Grok's unconditional stdout buffer close is
 also unnecessary for successful calls and warrants removal in that correction.
 
-## Scope and reproduction
+## Historical diagnostic scope and reproduction
 
-No production Windows fix was applied. Windows remains unsupported and excluded
-from the regular CI matrix. The probes alter only their child processes;
-published packages, sibling checkouts and release tags are unchanged.
+At the diagnostic stage, no production Windows fix had been applied and Windows
+was excluded from regular CI. The probes altered only their child processes.
+The historical workflow is now pinned to tools 1.0.1 and JAM 1.2.0 to preserve
+that baseline. Use `verify-windows-release.yml` to test the current public releases.
 
 Run the focused diagnostic workflow:
 

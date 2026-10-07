@@ -1,6 +1,38 @@
 # Verification
 
-## Public releases — 2026-10-07
+## Windows production corrections — 2026-10-07
+
+- Published `golded-ftn-jam` 1.2.1, `golded-ftn-tools` 1.0.2 and
+  `golded-ftn-mcp` 1.0.2. PyPI version endpoint wheel/sdist SHA-256 values
+  match the local release archives for all three packages. GitHub releases
+  are immutable; earlier releases remain intact.
+- Release CI passed for JAM (`37671291899`), tools (`37671379353`) and MCP
+  (`37672320776`), including native Windows Python 3.12 and 3.14. MCP CI
+  installs public dependencies and exercises a real SDK client/server stdio
+  session, listing and calling all six read-only tools.
+- A fresh public-package Windows workflow installed tools 1.0.2, MCP 1.0.2
+  and JAM 1.2.1 exclusively from PyPI. Package imports were checked to reside
+  inside the installed environment. Both Python 3.12 and 3.14 passed
+  **74 tests, 1 skipped** (POSIX SIGINT), including CLI receipt persistence
+  after pipe closure and actual MCP stdio:
+  [run 37673056768](https://github.com/golded-dev/golded-ftn-tools-python/actions/runs/37673056768).
+- A local macOS environment installed all three current packages from PyPI,
+  passed dependency compatibility checks and all **75 tools/MCP tests**.
+- Local lint/format, strict typing, builds and twine checks passed. JAM's
+  suite passed 133 tests with one skip, including independent literal binary
+  fixtures. Tools distribution checks passed both isolated wheel suites,
+  sdist rebuild equivalence, consumer typing, stubtest and all five formats.
+  Regression checks cover closed-pipe errors during stdout flush, successful
+  calls leaving stdout open, and ordinary ENOSPC error reporting.
+- README and generated manual release/support text were updated after tags.
+  The nine-page HTML checker passed links, anchors, IDs, copy targets and
+  embedded fixtures. No new browser visual check or Pages deployment occurred.
+- See [Windows diagnosis](WINDOWS-DIAGNOSIS.md) for the original mechanisms.
+  The fixes prevent future binary text-mode corruption; they do not repair
+  already-corrupted bases. GoldED Opus runtime interoperability remains
+  unverified, and concurrent base use remains unsupported.
+
+## Initial public releases — 2026-10-07
 
 - `golded-ftn-tools` 1.0.1 and `golded-ftn-mcp` 1.0.1 are published on PyPI.
   PyPI JSON version endpoints report wheel/sdist SHA-256 values identical to
