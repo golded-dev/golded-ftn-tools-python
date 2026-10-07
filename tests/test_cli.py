@@ -60,7 +60,7 @@ def test_help_and_version() -> None:
         )
     )
     assert not result.stderr
-    assert cli("--version").stdout.replace(b"\r\n", b"\n") == b"ftnt 1.0.0\n"
+    assert cli("--version").stdout.replace(b"\r\n", b"\n") == b"ftnt 1.0.1\n"
 
 
 @pytest.mark.parametrize("format", ["msg", "opus", "jam", "squish", "hudson"])

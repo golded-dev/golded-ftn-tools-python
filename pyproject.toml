@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "golded-ftn-tools"
-version = "1.0.0"
+version = "1.0.1"
 description = "FTN message bases and text filters from the command line"
 readme = "README.md"
 requires-python = ">=3.12"
