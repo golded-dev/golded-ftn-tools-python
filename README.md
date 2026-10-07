@@ -62,6 +62,6 @@ uv run scripts/build_reading_pages.py
 Distribution checks build dependency wheels from sibling checkouts and run both
 CLI wheels in fresh environments outside the checkout. They do not establish
 public-index dependency resolution. The sdist strips checkout-only uv sources.
-The CI matrix targets Linux/macOS/Windows with Python 3.12 and 3.14; no remote
-run has occurred. GoldED Opus runtime interoperability remains unverified.
+The CI matrix targets Linux and macOS with Python 3.12 and 3.14. Windows is
+unsupported for now. GoldED Opus runtime interoperability remains unverified.
 There is no configured remote, published CLI package or Pages deployment.
