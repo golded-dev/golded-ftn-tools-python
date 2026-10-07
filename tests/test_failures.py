@@ -130,6 +130,73 @@ def test_broken_receipt_pipe_after_commit(tmp_path: Path) -> None:
     assert json.loads(exported.stdout)["message"]["msgno"] == 1
 
 
+@pytest.mark.parametrize("command", ["catalog", "decode"])
+def test_windows_invalid_argument_output_pipe(command: str) -> None:
+    code = """
+import errno, io, os, sys
+from golded_ftn_tools.cli import main
+class ClosedPipe(io.RawIOBase):
+    failed = False
+    def writable(self):
+        return True
+    def fileno(self):
+        return 1
+    def write(self, data):
+        if not self.failed:
+            self.failed = True
+            error = OSError(errno.EINVAL, 'Invalid argument')
+            error.winerror = 109
+            raise error
+        return os.write(1, data)
+sys.stdout = io.TextIOWrapper(io.BufferedWriter(ClosedPipe()), encoding='utf-8')
+args = [sys.argv[1]]
+if args[0] == 'decode':
+    args += ['--charset', 'UTF-8']
+raise SystemExit(main(args))
+"""
+    result = injected(code, command, data=b"Text")
+    assert result.returncode == (141 if os.name == "posix" else 6), result.stderr
+    assert result.stderr == b""
+
+
+def test_successful_main_keeps_stdout_open() -> None:
+    result = injected(
+        """
+import sys
+from golded_ftn_tools.cli import main
+assert main(['decode', '--charset', 'UTF-8']) == 0
+assert not sys.stdout.closed
+sys.stdout.buffer.write(b'after')
+""",
+        data=b"Text",
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == b"Textafter"
+
+
+def test_output_disk_error_is_reported() -> None:
+    result = injected(
+        """
+import errno, sys
+from golded_ftn_tools.cli import main
+class Buffer:
+    def write(self, data):
+        raise OSError(errno.ENOSPC, 'No space left on device')
+    def flush(self):
+        pass
+class Output:
+    buffer = Buffer()
+    def flush(self):
+        pass
+sys.stdout = Output()
+raise SystemExit(main(['catalog']))
+"""
+    )
+    assert result.returncode == 6
+    assert json.loads(result.stderr)["code"] == "io.failed"
+    assert b"No space left on device" in result.stderr
+
+
 @pytest.mark.skipif(os.name != "posix", reason="POSIX SIGINT contract")
 def test_sigint_inside_command() -> None:
     code = """

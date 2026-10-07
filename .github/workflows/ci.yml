@@ -4,12 +4,7 @@ jobs:
   checks:
     strategy:
       matrix:
-        # Windows is unsupported for now. JAM read --revision reports an
-        # invalid base, and a closed stdout pipe exits 120.
-        os:
-          - ubuntu-latest
-          - macos-latest
-          # - windows-latest
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python: ['3.12', '3.14']
     runs-on: ${{ matrix.os }}
     defaults:

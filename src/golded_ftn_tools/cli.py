@@ -120,14 +120,26 @@ def parser() -> argparse.ArgumentParser:
 
 
 def _emit(value: object, stream: BinaryIO | None = None) -> None:
-    target = sys.stdout.buffer if stream is None else stream
-    target.write(dump(value).encode("utf-8"))
-    target.flush()
+    data = dump(value).encode("utf-8")
+    if stream is None:
+        _stdout(data)
+    else:
+        stream.write(data)
+        stream.flush()
+
+
+def _stdout(data: bytes) -> None:
+    try:
+        sys.stdout.buffer.write(data)
+        sys.stdout.buffer.flush()
+    except OSError as error:
+        if _pipe_closed(error):
+            raise BrokenPipeError() from error
+        raise
 
 
 def _text(value: str) -> None:
-    sys.stdout.buffer.write(value.encode("utf-8"))
-    sys.stdout.buffer.flush()
+    _stdout(value.encode("utf-8"))
 
 
 def _sentence(error: ToolError) -> str:
@@ -278,7 +290,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         code = _run(args)
         try:
             sys.stdout.buffer.flush()
-            sys.stdout.buffer.close()
         except OSError as error:
             if not _pipe_closed(error):
                 raise
