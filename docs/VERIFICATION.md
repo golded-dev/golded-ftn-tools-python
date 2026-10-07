@@ -1,5 +1,32 @@
 # Verification
 
+## Public releases — 2026-10-07
+
+- `golded-ftn-tools` 1.0.1 and `golded-ftn-mcp` 1.0.1 are published on PyPI.
+  PyPI JSON version endpoints report wheel/sdist SHA-256 values identical to
+  the local release archives for both packages. Both GitHub releases are
+  immutable. The earlier tools `v1.0.0` release remains intact.
+- Tools release commit `781627f`: all four Linux/macOS CI jobs passed with
+  Python 3.12 and 3.14 (run `37667798564`). MCP release commit `b95bee0`: the
+  same matrix passed using public dependencies (run `37668692706`).
+- Local ruff lint/format, strict mypy, builds and twine checks passed for both
+  packages. Tools distribution verification passed both isolated wheel suites,
+  sdist rebuild equivalence, consumer typing, stubtest and all five formats.
+- A fresh environment installed both 1.0.1 packages exclusively from PyPI,
+  passed dependency compatibility checks and all 70 tools/MCP tests. A real
+  stdio session initialized, listed exactly the six read-only MCP tools, and
+  successfully called catalog, heads, read, export, decode and repair against
+  a synthetic offline MSG base and text inputs.
+- Release-status documentation was committed after the release tags. The
+  nine-page HTML checker passed links, anchors, unique IDs, copy targets and
+  the exact embedded JSON fixture. A browser attempt to open the local manual
+  was rejected by the browser's URL policy; no fresh visual check was completed.
+- Windows stays unsupported. Both prior failures and isolated corrections
+  were confirmed on native Windows 3.12.10 and 3.14.7; see
+  [Windows diagnosis](WINDOWS-DIAGNOSIS.md). No production Windows fix was applied.
+- GoldED Opus runtime interoperability remains unverified. GitHub Pages
+  deployment was outside this release task and was not performed.
+
 ## Local implementation — 2026-10-06
 
 Working-tree checks on macOS 27.0 arm64, CPython 3.14.6 and 3.12.8.
@@ -42,7 +69,7 @@ No release tag, CLI publication, remote CI run or deployment was performed.
   No new visual/browser check was performed; earlier visual observations below
   are historical. Shared design files were inventoried; no layout/token rule changed.
 
-## Remaining release gates
+## Historical release gates — 2026-10-06
 
 - Run offline GoldED read/edit interoperability in both directions for Opus,
   against a pinned build/platform. Source inspection and Python fixtures do not
