@@ -18,7 +18,7 @@
 <div><span>FTNT💥</span><a href="https://golded-dev.github.io/golded-ftn-python-docs/">Library docs ↗</a></div>
 </header>
 <div class="shell">
-<div class="bar"><span>GOLDED / FTN TOOLS</span><span>RELEASED 1.0.1 · PYTHON 3.12+</span></div>
+<div class="bar"><span>GOLDED / FTN TOOLS</span><span>RELEASED 1.0.2 · PYTHON 3.12+</span></div>
 <div class="layout">
 <aside><div class="sidebar">
 <nav class="page-nav" aria-label="Manual"><a href="index.html">Home</a><a href="create.html">create</a><a href="write.html">write</a><a href="read.html">read</a><a href="export.html">export</a><a href="decode.html">decode</a><a href="repair.html">repair</a><a href="heads.html" aria-current="page">heads</a><a href="catalog.html">catalog</a></nav>
@@ -27,7 +27,7 @@
 <main><p class="eyebrow">Subjects first. Bodies later.</p><p class="command">ftnt heads</p><h1>Index a base without bodies.</h1><p class="hero-lead">A short list for choosing one message. Not an archive.</p><section class="guide-section" id="usage"><div class="section-title"><span>00</span><h2>Usage</h2></div><p><code>ftnt heads BASE --format FORMAT [options]</code></p><p>Prints one JSON object per message and leaves out <code>body_text</code>. Use <a href="read.html"><code>read</code></a> for the message you actually need. The default <code>--limit</code> is 100. <code>--limit 0</code> reads the whole base. <code>--after MSGNO</code> skips that number and everything before it.</p><div class="code-pane" id="heads-example"><div class="code-head"><span>first hundred subjects</span><button type="button" data-copy="heads-example-text" hidden>Copy code</button></div><pre><code id="heads-example-text">ftnt heads ./fixtures/general --format jam --limit 100
 </code></pre></div><p><code>body_bytes</code> is the UTF-8 length of the body the reader returned. <code>msgid</code> is present only when the reader parsed one. Exit 0, or 7 with <code>--archive</code> when a reader issue was reported.</p></section></main>
 </div></div>
-<footer><span>GoldED FTN tools / GoldED.dev</span><span>RELEASED 1.0.1 · MIT LICENSE</span></footer>
+<footer><span>GoldED FTN tools / GoldED.dev</span><span>RELEASED 1.0.2 · MIT LICENSE</span></footer>
 </div>
 
 <script>

@@ -1,0 +1,34 @@
+name: Verify published Windows release
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  installed:
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.12', '3.14']
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: golded-ftn-tools
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: golded-dev/golded-ftn-mcp-python
+          path: golded-ftn-mcp-python
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      - name: Install only public packages
+        run: |
+          uv venv --python ${{ matrix.python }}
+          uv pip install --no-sources --index-url https://pypi.org/simple golded-ftn-tools==1.0.2 golded-ftn-mcp==1.0.2 pytest
+          uv pip check
+      - name: Verify the installed package paths and version
+        run: |
+          .venv/Scripts/python.exe -c "import sys; from pathlib import Path; import golded_ftn_tools, golded_ftn_mcp, golded_ftn_jam; assert all(Path(m.__file__).is_relative_to(Path(sys.prefix)) for m in (golded_ftn_tools, golded_ftn_mcp, golded_ftn_jam)); print('All imports come from the installed distributions')"
+          .venv/Scripts/python.exe -m golded_ftn_tools --version
+      - name: Test CLI, committed receipts and actual MCP stdio
+        run: .venv/Scripts/python.exe -m pytest -q golded-ftn-tools/tests golded-ftn-mcp-python/tests

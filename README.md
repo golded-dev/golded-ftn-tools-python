@@ -3,10 +3,10 @@
 Eight command-line tools for FTN message bases, JSON fixtures and text pipes.
 Python 3.12+. MIT licensed.
 
-**Status: released on PyPI as 1.0.1.** Install with Python 3.12+:
+**Status: released on PyPI as 1.0.2.** Install with Python 3.12+:
 
 ```sh
-python -m pip install golded-ftn-tools==1.0.1
+python -m pip install golded-ftn-tools==1.0.2
 ftnt --help
 ```
 
@@ -65,9 +65,9 @@ uv run scripts/build_reading_pages.py
 ```
 
 Distribution checks build dependency wheels from sibling checkouts and run both
-CLI wheels in fresh environments outside the checkout. A separate clean installation of 1.0.1
+CLI wheels in fresh environments outside the checkout. A separate clean installation of 1.0.2
 resolved all dependencies from PyPI and ran `ftnt --version`. The sdist strips checkout-only uv sources.
-The CI matrix targets Linux and macOS with Python 3.12 and 3.14. Windows is
-unsupported for now. GoldED Opus runtime interoperability remains unverified.
+The CI matrix tests Linux, macOS and Windows with Python 3.12 and 3.14.
+Windows is supported from 1.0.2 with `golded-ftn-jam>=1.2.1`. GoldED Opus runtime interoperability remains unverified.
 Source and release archives are on [GitHub](https://github.com/golded-dev/golded-ftn-tools-python).
 GitHub Pages deployment remains outside this release.

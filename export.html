@@ -18,7 +18,7 @@
 <div><span>FTNT💥</span><a href="https://golded-dev.github.io/golded-ftn-python-docs/">Library docs ↗</a></div>
 </header>
 <div class="shell">
-<div class="bar"><span>GOLDED / FTN TOOLS</span><span>RELEASED 1.0.1 · PYTHON 3.12+</span></div>
+<div class="bar"><span>GOLDED / FTN TOOLS</span><span>RELEASED 1.0.2 · PYTHON 3.12+</span></div>
 <div class="layout">
 <aside><div class="sidebar">
 <nav class="page-nav" aria-label="Manual"><a href="index.html">Home</a><a href="create.html">create</a><a href="write.html">write</a><a href="read.html">read</a><a href="export.html" aria-current="page">export</a><a href="decode.html">decode</a><a href="repair.html">repair</a><a href="heads.html">heads</a><a href="catalog.html">catalog</a></nav>
@@ -29,7 +29,7 @@
 </code></pre></div><div class="table-wrap"><table><thead><tr><th>Option</th><th>Meaning</th></tr></thead><tbody><tr><td><code>--archive</code></td><td>Keep going after reader issues. Each issue is a JSON object on stderr. Exit 7 when any issue was reported, otherwise 0.</td></tr><tr><td><code>--board</code></td><td>Optional Hudson filter, 1..200. Other formats reject it.</td></tr><tr><td><code>--fallback-charset</code></td><td>Default <code>CP850</code>.</td></tr></tbody></table></div></section><section class="guide-section" id="partial"><div class="section-title"><span>01</span><h2>Partial output</h2></div><p>Readers may buffer the base. If the command fails, stdout can already contain earlier messages. Check the exit status before treating the stream as complete. Without <code>--archive</code>, a reader problem stops the command instead of being collected as an issue.</p><div class="code-pane" id="export-issue"><div class="code-head"><span>reader_issue on stderr</span><button type="button" data-copy="export-issue-text" hidden>Copy code</button></div><pre><code id="export-issue-text">{&quot;schema_version&quot;:1,&quot;type&quot;:&quot;reader_issue&quot;,&quot;issue&quot;:{}}
 </code></pre></div><p>The <code>issue</code> object is the reader’s own report.</p></section></main>
 </div></div>
-<footer><span>GoldED FTN tools / GoldED.dev</span><span>RELEASED 1.0.1 · MIT LICENSE</span></footer>
+<footer><span>GoldED FTN tools / GoldED.dev</span><span>RELEASED 1.0.2 · MIT LICENSE</span></footer>
 </div>
 
 <script>

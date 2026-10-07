@@ -1,4 +1,4 @@
-name: Diagnose unsupported Windows
+name: Reproduce historical Windows 1.0.1 failures
 on: workflow_dispatch
 permissions:
   contents: read
@@ -16,7 +16,7 @@ jobs:
         shell: bash
         run: |
           uv venv --python ${{ matrix.python }}
-          uv pip install --no-sources golded-ftn-tools==1.0.1
+          uv pip install --no-sources golded-ftn-tools==1.0.1 golded-ftn-jam==1.2.0
       - name: Compare failures with process-local probes
         shell: bash
         run: .venv/Scripts/python.exe scripts/diagnose_windows.py
