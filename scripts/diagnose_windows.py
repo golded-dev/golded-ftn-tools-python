@@ -68,6 +68,7 @@ def jam(base: Path, probe: str | None) -> tuple[int, bytes]:
 
 
 def pipe(base: Path, probe: str | None) -> tuple[int, bytes]:
+    base.mkdir()
     process = subprocess.Popen(
         command(probe, "write", str(base), "--format", "msg", "--debug"),
         stdin=subprocess.PIPE,
