@@ -1,6 +1,62 @@
-# Planning-material checks
+# Verification
 
-2026-10-05. No CLI is implemented or tested.
+## Local implementation — 2026-10-06
+
+Working-tree checks on macOS 27.0 arm64, CPython 3.14.6 and 3.12.8.
+No release tag, CLI publication, remote CI run or deployment was performed.
+
+- `uv run pytest -q`: 62 passed on Python 3.14.6.
+- `uv run --isolated --python 3.12 pytest -q`: 62 passed on Python 3.12.8.
+  Subprocess tests cover all six commands, all five format selections, actual
+  writer receipts/revisions, strict JSON/JSONL preflight, partial commits,
+  unknown/duplicate keys, invalid Unicode, dates, flags, missing targets,
+  strict/archive corruption, sparse MSG numbers and literal Hudson boards 1/200.
+- Real MSG record-lock contention with zero timeout returns 5 without a receipt.
+  A deliberately closed stdout pipe returns POSIX 141 after append commits;
+  export confirms the committed message. A controlled SIGINT returns 130.
+  Adapter-boundary injections check rollback/I/O, conflict, lock, unsupported
+  and unexpected failure reporting after an earlier successful append.
+  Injection checks CLI reporting; package tests protect actual rollback algorithms.
+- Ruff lint/format and strict mypy passed for CLI source/tests. Ruff also checks
+  the build and verification scripts. `git diff --check` passed (whitespace only).
+- `uv build`, `twine check` and `scripts/verify_distribution.py` passed. Wheel
+  metadata uses public version constraints, contains the console entry point and
+  py.typed, and has no local-source dependencies. The sdist strips uv sources.
+  A wheel rebuilt from sdist has identical file contents. Both wheels installed
+  in fresh environments outside the checkouts; each passed 62 subprocess tests,
+  strict consumer typing, stubtest, pip check and all five format examples.
+  Examples use the actual receipt identity, including Squish UIDs.
+- Dependency wheels were built from sibling checkouts: core 1.2.2, MSG 1.3.0,
+  JAM/Squish/Hudson 1.2.0. Other repositories' existing changes were preserved.
+- `uv pip compile pyproject.toml --no-sources` failed resolution: the index
+  offered only MSG 1.2.0, while the CLI requires >=1.3.0. Public installation
+  remains blocked on publishing the independently reviewed MSG dependency.
+- Local MSG Opus extension: 127 tests passed on Python 3.14.6 and 3.12.8;
+  Ruff, strict mypy, agent-compose check, distribution rebuild and both isolated
+  installed-package suites passed. New tests use literal timestamp/reply bytes,
+  external header metadata, address contradictions, date boundaries, stale
+  revisions, CRUD operations and controlled append/update/delete rollback.
+- `scripts/build_reading_pages.py` regenerated all reading copies.
+  `scripts/check_reading_pages.py` passed unique IDs, local links/anchors,
+  copy targets, one current-page marker per page and exact embedded example JSON.
+  No new visual/browser check was performed; earlier visual observations below
+  are historical. Shared design files were inventoried; no layout/token rule changed.
+
+## Remaining release gates
+
+- Run offline GoldED read/edit interoperability in both directions for Opus,
+  against a pinned build/platform. Source inspection and Python fixtures do not
+  establish this. Keep all bases offline; concurrent use remains unsupported.
+- Commit/review the MSG dependency separately and publish it only when authorized.
+  The CLI's declared public dependency range cannot currently resolve.
+- Establish a remote and run the configured Linux/macOS/Windows CI matrix.
+  Local macOS Python-version checks do not establish Linux or Windows execution.
+- Visually check updated HTML on desktop/mobile/no-JS/print before site publication.
+  Shared rules remain sourced from the documentation design and historical site palette.
+
+## Planning-material checks
+
+2026-10-05. At this point no CLI was implemented or tested.
 
 - Compared specification and JSON fields with core models and writer-session signatures.
 - Parsed JSON examples and mapped them to public OutgoingMessage/ControlLine

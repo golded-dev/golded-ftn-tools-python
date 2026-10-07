@@ -1,6 +1,7 @@
 # Specification: golded-ftn-tools
 
-Status: proposed v1 contract for review, 2026-10-05. Nothing is implemented.
+Status: implemented locally, 2026-10-06. Release acceptance still has external gates;
+see [VERIFICATION.md](VERIFICATION.md).
 
 ## Purpose
 
@@ -34,10 +35,9 @@ direct binary record serialization in CLI code.
   explicit filter.
 
 `msg` selects FTSC headers; `opus` selects Opus headers in the same `.MSG`
-storage layout. Both variants are planned for create/write/read/export. Opus
-writing and consistent revision reads require a new `golded-ftn-msg` release;
-the current package only reads Opus. This prerequisite is part of the plan,
-not an implemented CLI capability. No automatic header detection or conversion.
+storage layout. Both variants support create/write/read/export locally. Opus writing and
+consistent revision reads use the local `golded-ftn-msg` 1.3.0 extension.
+The CLI dependency floor requires that release before public installation. No automatic header detection or conversion.
 
 ## Commands
 
@@ -131,17 +131,17 @@ full reply lists, original text bytes or physical record locations.
 ### decode and repair
 
 `decode` requires an explicit charset; use core aliases and strict decoding. No
-charset guessing, replacement characters or `--ignore-errors`. An incremental
-decoder must handle multibyte sequences across chunk boundaries using the same
-codec as core. If a public alias-resolution seam is missing, core must own that
-API; the CLI must not import `_resolve_charset`. Decode preserves line endings.
+charset guessing, replacement characters or `--ignore-errors`. V1 reads the whole input into memory. Core
+`detect_charset(b"", charset)` selects the explicit codec using core aliases;
+the CLI decodes with that codec and preserves trailing nulls. There is no chunk
+boundary or private charset API in this implementation. Decode preserves line endings.
 
 `repair` accepts UTF-8 and calls `repair_mojibake`. `--charset` supplies declared
 charset, not stdin encoding. `--no-prefer-quoted` disables the lower threshold
 for quoted lines. Default output is `result.text`, without an extra newline.
 `--json` emits `{text, changed, confidence}` with schema version and type.
 
-V1 may process all repair input in memory to preserve core line normalization
+V1 processes all repair input in memory to preserve core line normalization
 and confidence aggregation. Help must state this. A later streaming mode must
 not silently change those semantics. Repair inherits the core heuristic,
 including protection of literal degree signs. No change is success, not an error.
@@ -159,7 +159,7 @@ including protection of literal degree signs. No change is success, not an error
 | 6 | I/O failure or failed rollback |
 | 7 | Archive export had issues, even if some messages were emitted |
 | 130 | Interrupted by SIGINT |
-| 141 | Broken pipe on POSIX; portable Windows handling needs testing |
+| 141 | Broken pipe on POSIX; Windows returns 6 for a broken pipe; remote execution remains unverified |
 
 Errors go to stderr, never into stdout JSON. Known errors have no traceback;
 `--debug` may show one on stderr. Multiple failures use the terminal failure,

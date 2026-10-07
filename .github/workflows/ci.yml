@@ -1,0 +1,42 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  checks:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ['3.12', '3.14']
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: golded-ftn-tools
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: golded-ftn-tools
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: golded-dev/golded-ftn-python
+          path: golded-ftn-python
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: golded-dev/golded-ftn-msg-python
+          path: golded-ftn-msg-python
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: golded-dev/golded-ftn-jam-python
+          path: golded-ftn-jam-python
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: golded-dev/golded-ftn-squish-python
+          path: golded-ftn-squish-python
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: golded-dev/golded-ftn-hudson-python
+          path: golded-ftn-hudson-python
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      - run: uv sync --locked --python ${{ matrix.python }}
+      - run: uv run ruff check . && uv run ruff format --check . && uv run mypy
+      - run: uv run pytest -q
+      - run: uv build && uv run twine check dist/* && uv run python scripts/verify_distribution.py

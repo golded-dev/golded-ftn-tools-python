@@ -72,8 +72,9 @@ Remove shell frame and main padding, wrap code and keep panels together where po
 ## Copy and verification
 
 Public-facing copy is English. The page may sell the idea but must clearly show
-“Planned / not released” and label command blocks as proposed workflows. No
-install/download button or claim of a working CLI before implementation.
+“Implemented locally / not released” while public installation is unavailable.
+Command blocks show working local workflows. Public installation claims require
+released dependencies and CLI distribution verification.
 A local Git repository does not authorize a remote, release or Pages deployment.
 
 Check desktop/mobile in Safari, keyboard focus, disclosure, anchors, copy, no-JS,

@@ -1,7 +1,7 @@
 # JSON contract
 
-Status: proposed schema version 1. CLI version and schema version are distinct.
-Examples describe input/data, not an implemented parser.
+Status: schema version 1 implemented locally. CLI version and schema version
+are distinct. Release verification is recorded in VERIFICATION.md.
 
 ## Import
 
@@ -27,14 +27,16 @@ format-specific and checked structurally before writing:
 | Format | Date input |
 | --- | --- |
 | MSG / FTSC | Naive datetime; no timezone |
-| MSG / Opus (planned writer extension) | Naive datetime; DOS precision and textual-date policy settled in plan phase 0a |
+| MSG / Opus | Naive datetime; 1980–2069, even seconds, no microseconds |
 | JAM | Naive (interpreted as UTC) or timezone-aware datetime |
 | Squish | Timezone-aware datetime; writer converts to UTC |
 | Hudson | Naive datetime; no timezone |
 
-Opus date limits and omitted/arrived timestamp behavior must be documented
-with the planned MSG writer extension before CLI implementation. The current
-FTSC date rules must not be applied to Opus by assumption.
+Opus dates use both DOS written words and the textual date. The local MSG 1.3.0
+writer accepts their shared 1980–2069 range and rejects odd seconds. Omitted dates
+write zero written words and an empty textual date; new arrived words are zero
+because the core input model has no arrived field. Updates in the MSG package
+preserve arrived words. Runtime GoldED interoperability remains unverified.
 
 Pass datetime through without converting or removing timezone. Use
 `examples/message.json` for MSG/JAM/Hudson and `examples/message-squish.json`
@@ -90,8 +92,9 @@ dataclass fields. Tuples become arrays. Do not normalize IDs, routing or text
 beyond existing reader behavior.
 
 `source.base` is the resolved absolute base path. Hudson `source.board` comes
-from reader area/provenance through a documented adapter, not title heuristics.
-Protect the precise mapping with a fixture test before shipping Hudson export.
+from the reader's `area_meta_key="hudson:N"`, set from the binary board byte.
+The adapter checks N is in 1..200. A two-board literal fixture protects this
+mapping and lookup; message titles are not inspected.
 Do not invent unavailable fields. Paths can expose local structure; users decide
 whether to share output.
 

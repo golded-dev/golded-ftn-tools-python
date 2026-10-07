@@ -1,6 +1,25 @@
 # Implementation plan
 
-Status: ready for review. This task does not start implementation.
+Status: implementation started 2026-10-06. The phases below preserve the original
+acceptance plan. Current implementation and verification are recorded here and
+in [VERIFICATION.md](VERIFICATION.md).
+
+## Implementation status
+
+- Six commands and schema v1 are implemented locally using public APIs.
+- Local MSG 1.3.0 adds explicit Opus sessions; dates use the shared DOS/text
+  range 1980–2069 with even seconds. Arrived words default to zero and survive updates.
+- Decode reads whole input in v1 and uses public `detect_charset(b"", charset)`
+  for alias selection. It preserves trailing nulls and line endings.
+- Hudson board mapping uses area_meta_key, protected by an independent two-board fixture.
+- Subprocess tests cover workflows, preflight, partial commits, archive issues,
+  locks, broken receipts, SIGINT and adapter error reporting.
+- Linux/Windows remote CI, GoldED Opus runtime interoperability and public-index
+  resolution remain release gates. Publication has not been authorized.
+- Design files were inventoried. FTNT inherits documentation tokens from
+  golded-ftn-python-docs/DESIGN.md, which uses golded-site's historical palette.
+  This change updates status/copy only; layout and shared visual rules are unchanged.
+
 
 ## Chosen approach
 
@@ -9,11 +28,11 @@ A separate CLI repository, thin adapters and standard-library `argparse`.
 dependencies small. Reconsider Click/Typer for a concrete need, not colored help.
 
 Proposed dependencies: `golded-ftn>=1.2.1,<2` and the four format packages
-`golded-ftn-msg`, `golded-ftn-jam`, `golded-ftn-squish`, `golded-ftn-hudson` at
-`>=1.2.0,<2`. Install all formats in v1 so help matches actual capability.
+`golded-ftn-msg>=1.3.0,<2` and `golded-ftn-jam`, `golded-ftn-squish`,
+`golded-ftn-hudson` at `>=1.2.0,<2`. Install all formats in v1 so help matches actual capability.
 No local `uv.sources` in public distributions. Core and format packages version
 independently of the CLI. The MSG minimum version must be raised to the release
-that implements and verifies Opus writing; the current MSG writer rejects it.
+that implements and verifies Opus writing; the published MSG 1.2.0 writer rejects it; the local 1.3.0 extension implements it.
 
 The CLI owns arguments, JSON types, text/binary streams and exit codes. Packages
 own FTN rules. Use `json` with explicit field validation rather than another
@@ -22,8 +41,8 @@ runtime model framework. Choose small typed adapters over a plugin system.
 ## 0. Establish API boundaries — small/medium
 
 Read [SPEC.md](SPEC.md) and [JSON.md](JSON.md), then inspect current installed
-packages again. The documents use core 1.2.1 and format packages 1.2.0, inspected
-on 2026-10-05. Use public exports, not private writer helpers.
+packages again. The original plan used core 1.2.1 and format packages 1.2.0, inspected
+on 2026-10-05. Current local verification uses core 1.2.2 and MSG 1.3.0. Use public exports, not private writer helpers.
 
 Discovery before implementation:
 
@@ -165,8 +184,7 @@ discovery change required changes in a dependency.
 Exit: SPEC acceptance criteria are met and documented; the relevant DESIGN.md
 files agree on shared rules, and affected pages have been checked against them.
 Tags, PyPI publication
-and GitHub Pages require a later explicit task. There is no automatic publication
-or CLI implementation in this planning repository.
+and GitHub Pages require a later explicit task. Implementation is local. No publication is automatic.
 
 ## Review points
 

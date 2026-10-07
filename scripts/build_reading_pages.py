@@ -1,4 +1,4 @@
-"""Rebuild reading copies: uv run --with markdown --with pygments scripts/build_reading_pages.py."""
+"""Rebuild HTML reading copies from Markdown and the example JSON."""
 
 import html
 import re
@@ -66,6 +66,7 @@ def main() -> None:
         ),
     ]
     destinations = {source + ".md": target for source, target, _, _ in pages}
+    destinations["VERIFICATION.md"] = "docs/VERIFICATION.md"
     for source, target, title, eyebrow in pages:
         text = (ROOT / "docs" / (source + ".md")).read_text(encoding="utf-8")
         parts = re.split(r"^## (.+)$", text, flags=re.MULTILINE)
@@ -84,7 +85,7 @@ def main() -> None:
             + 'A reading copy of <a href="docs/'
             + source
             + '.md">the Markdown source</a>.'
-            + " Proposed scope — no CLI has been implemented.</p>"
+            + " Implemented locally; not released. See the verification record.</p>"
         )
         navigation = []
         for number, (slug, heading, content) in enumerate(sections):
@@ -127,7 +128,8 @@ def main() -> None:
                 f"{html.escape(display)}</a>"
             )
             article += (
-                f'<section class="guide-section" id="{slug}"><div class="section-title">'
+                f'<section class="guide-section" id="{slug}">'
+                '<div class="section-title">'
                 f"<span>{number:02d}</span><h2>{html.escape(display)}</h2></div>"
                 + rendered
                 + "</section>"
@@ -150,8 +152,8 @@ def main() -> None:
             + "".join(navigation)
             + '</nav></details><nav class="page-nav" aria-label="Libraries">'
             + '<a href="https://golded-dev.github.io/golded-ftn-python-docs/">'
-            + 'Python library docs ↗</a></nav><div class="aside-note">Proposed contract.<br>'
-            + "No implementation.<br>No release.</div></div></aside>"
+            + 'Python library docs ↗</a></nav><div class="aside-note">'
+            + "Implemented locally.<br>Not released.</div></div></aside>"
         )
         page = re.sub(
             r"<aside>.*?</main>",
