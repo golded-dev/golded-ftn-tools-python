@@ -1,0 +1,22 @@
+name: Diagnose unsupported Windows
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  probe:
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.12', '3.14']
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      - name: Install published packages in isolation
+        shell: bash
+        run: |
+          uv venv --python ${{ matrix.python }}
+          uv pip install --no-sources golded-ftn-tools==1.0.1
+      - name: Compare failures with process-local probes
+        shell: bash
+        run: .venv/Scripts/python.exe scripts/diagnose_windows.py
