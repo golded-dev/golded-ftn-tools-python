@@ -18,7 +18,7 @@
 <div><span>FTNT💥</span><a href="https://golded-dev.github.io/golded-ftn-python-docs/">Library docs ↗</a></div>
 </header>
 <div class="shell">
-<div class="bar"><span>GOLDED / FTN TOOLS</span><span>LOCAL IMPLEMENTATION · NOT RELEASED · PYTHON 3.12+</span></div>
+<div class="bar"><span>GOLDED / FTN TOOLS</span><span>RELEASED 1.0.1 · PYTHON 3.12+</span></div>
 <div class="layout">
 <aside><div class="sidebar">
 <nav class="page-nav" aria-label="Manual"><a href="index.html">Home</a><a href="create.html">create</a><a href="write.html">write</a><a href="read.html">read</a><a href="export.html">export</a><a href="decode.html">decode</a><a href="repair.html">repair</a><a href="heads.html">heads</a><a href="catalog.html" aria-current="page">catalog</a></nav>
@@ -27,7 +27,7 @@
 <main><p class="eyebrow">Read the tool. Not the base.</p><p class="command">ftnt catalog</p><h1>Describe this binary.</h1><p class="hero-lead">Commands, fields, date rules and error codes for the version you are running.</p><section class="guide-section" id="usage"><div class="section-title"><span>00</span><h2>Usage</h2></div><p><code>ftnt catalog</code></p><p>Prints one JSON document that describes this binary: commands, flags, write fields, date rules, exit codes and error codes. It is built from the parser and the tables the commands use. Proposals are not included.</p><div class="code-pane" id="catalog-example"><div class="code-head"><span>describe the binary</span><button type="button" data-copy="catalog-example-text" hidden>Copy code</button></div><pre><code id="catalog-example-text">ftnt catalog
 </code></pre></div><p><code>--json-errors</code> prints a failure as one JSON object on stderr. A stderr that is not a terminal does the same. On a terminal, the sentence stays unless you pass the flag. The object carries <code>code</code>, <code>exit_status</code> and <code>message</code>. A write also carries <code>input_record</code> and <code>committed</code>.</p></section></main>
 </div></div>
-<footer><span>GoldED FTN tools / GoldED.dev</span><span>LOCAL IMPLEMENTATION · MIT LICENSE</span></footer>
+<footer><span>GoldED FTN tools / GoldED.dev</span><span>RELEASED 1.0.1 · MIT LICENSE</span></footer>
 </div>
 
 <script>

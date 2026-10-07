@@ -18,7 +18,7 @@
 <div><span>FTNT💥</span><a href="https://golded-dev.github.io/golded-ftn-python-docs/">Library docs ↗</a></div>
 </header>
 <div class="shell">
-<div class="bar"><span>GOLDED / FTN TOOLS</span><span>LOCAL IMPLEMENTATION · NOT RELEASED · PYTHON 3.12+</span></div>
+<div class="bar"><span>GOLDED / FTN TOOLS</span><span>RELEASED 1.0.1 · PYTHON 3.12+</span></div>
 <div class="layout">
 <aside><div class="sidebar">
 <nav class="page-nav" aria-label="Manual"><a href="index.html">Home</a><a href="create.html">create</a><a href="write.html" aria-current="page">write</a><a href="read.html">read</a><a href="export.html">export</a><a href="decode.html">decode</a><a href="repair.html">repair</a><a href="heads.html">heads</a><a href="catalog.html">catalog</a></nav>
@@ -58,7 +58,7 @@
 </code></pre></div></section><section class="guide-section" id="receipts"><div class="section-title"><span>02</span><h2>Receipts and reruns</h2></div><p>A receipt is one JSON object per committed append:</p><div class="code-pane" id="write-result"><div class="code-head"><span>write_result</span><button type="button" data-copy="write-result-text" hidden>Copy code</button></div><pre><code id="write-result-text">{&quot;schema_version&quot;:1,&quot;type&quot;:&quot;write_result&quot;,&quot;input_record&quot;:1,&quot;identity&quot;:{&quot;format&quot;:&quot;jam&quot;,&quot;base&quot;:&quot;/resolved/fixtures/general&quot;,&quot;msgno&quot;:1,&quot;board&quot;:null},&quot;revision&quot;:{&quot;identity&quot;:{&quot;format&quot;:&quot;jam&quot;,&quot;base&quot;:&quot;/resolved/fixtures/general&quot;,&quot;msgno&quot;:1,&quot;board&quot;:null},&quot;location&quot;:[0,0],&quot;digest&quot;:&quot;opaque&quot;}}
 </code></pre></div><p><code>input_record</code> counts from 1 in the batch. <code>identity</code> and <code>revision</code> describe what the writer stored. Treat <code>location</code> and <code>digest</code> as opaque. They belong to that base, not to a portable id.</p><p>If record 3 fails after record 1 and 2 committed, those two messages stay. Stderr names the failing record and the committed count. A broken pipe can hide a receipt for a message that is already stored. Running the same batch again can append duplicates.</p></section></main>
 </div></div>
-<footer><span>GoldED FTN tools / GoldED.dev</span><span>LOCAL IMPLEMENTATION · MIT LICENSE</span></footer>
+<footer><span>GoldED FTN tools / GoldED.dev</span><span>RELEASED 1.0.1 · MIT LICENSE</span></footer>
 </div>
 
 <script>

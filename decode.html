@@ -18,7 +18,7 @@
 <div><span>FTNT💥</span><a href="https://golded-dev.github.io/golded-ftn-python-docs/">Library docs ↗</a></div>
 </header>
 <div class="shell">
-<div class="bar"><span>GOLDED / FTN TOOLS</span><span>LOCAL IMPLEMENTATION · NOT RELEASED · PYTHON 3.12+</span></div>
+<div class="bar"><span>GOLDED / FTN TOOLS</span><span>RELEASED 1.0.1 · PYTHON 3.12+</span></div>
 <div class="layout">
 <aside><div class="sidebar">
 <nav class="page-nav" aria-label="Manual"><a href="index.html">Home</a><a href="create.html">create</a><a href="write.html">write</a><a href="read.html">read</a><a href="export.html">export</a><a href="decode.html" aria-current="page">decode</a><a href="repair.html">repair</a><a href="heads.html">heads</a><a href="catalog.html">catalog</a></nav>
@@ -27,7 +27,7 @@
 <main><p class="eyebrow">Old bytes. No substitutions.</p><p class="command">ftnt decode</p><h1>Decode a charset to UTF-8.</h1><p class="hero-lead">A strict text filter. The whole input is read before any output.</p><section class="guide-section" id="usage"><div class="section-title"><span>00</span><h2>Usage</h2></div><p><code>ftnt decode --charset CHARSET</code></p><p>Reads all of stdin into memory and writes UTF-8 text to stdout. Decoding is strict. Line endings and trailing nulls are preserved. <code>CHARSET</code> is a core charset alias, for example <code>IBMPC</code>, <code>CP850</code> or <code>LATIN-1</code>.</p><div class="code-pane" id="decode-example"><div class="code-head"><span>decode a legacy file</span><button type="button" data-copy="decode-example-text" hidden>Copy code</button></div><pre><code id="decode-example-text">ftnt decode --charset IBMPC &lt; old-text.txt
 </code></pre></div></section><section class="guide-section" id="failures"><div class="section-title"><span>01</span><h2>Failures</h2></div><p>An unknown alias or a byte that is illegal in that charset fails the command. The filter does not guess a replacement character and does not run the mojibake repair.</p></section></main>
 </div></div>
-<footer><span>GoldED FTN tools / GoldED.dev</span><span>LOCAL IMPLEMENTATION · MIT LICENSE</span></footer>
+<footer><span>GoldED FTN tools / GoldED.dev</span><span>RELEASED 1.0.1 · MIT LICENSE</span></footer>
 </div>
 
 <script>
