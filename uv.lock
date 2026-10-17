@@ -353,8 +353,8 @@ wheels = [
 
 [[package]]
 name = "golded-ftn"
-version = "1.2.2"
-source = { editable = "../golded-ftn-python" }
+version = "1.3.0"
+source = { editable = "../golded-ftn-python-r1" }
 
 [package.metadata]
 
@@ -368,15 +368,39 @@ dev = [
 ]
 
 [[package]]
+name = "golded-ftn-binkp"
+version = "0.1.0"
+source = { editable = "../../../golded-ftn-binkp-python" }
+dependencies = [
+    { name = "golded-ftn" },
+    { name = "golded-ftn-packet" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "golded-ftn", editable = "../golded-ftn-python-r1" },
+    { name = "golded-ftn-packet", editable = "../../../golded-ftn-packet-python" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "build", specifier = ">=1.2" },
+    { name = "mypy", specifier = ">=1.15" },
+    { name = "pytest", specifier = ">=8" },
+    { name = "ruff", specifier = ">=0.11" },
+    { name = "twine", specifier = ">=6" },
+]
+
+[[package]]
 name = "golded-ftn-hudson"
-version = "1.2.0"
-source = { editable = "../golded-ftn-hudson-python" }
+version = "1.3.0"
+source = { editable = "../golded-ftn-hudson-python-f1" }
 dependencies = [
     { name = "golded-ftn" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "golded-ftn", editable = "../golded-ftn-python" }]
+requires-dist = [{ name = "golded-ftn", editable = "../golded-ftn-python-r1" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -390,14 +414,14 @@ dev = [
 
 [[package]]
 name = "golded-ftn-jam"
-version = "1.2.1"
-source = { editable = "../golded-ftn-jam-python" }
+version = "1.3.0"
+source = { editable = "../golded-ftn-jam-python-f1" }
 dependencies = [
     { name = "golded-ftn" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "golded-ftn", editable = "../golded-ftn-python" }]
+requires-dist = [{ name = "golded-ftn", editable = "../golded-ftn-python-r1" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -411,14 +435,14 @@ dev = [
 
 [[package]]
 name = "golded-ftn-msg"
-version = "1.3.0"
-source = { editable = "../golded-ftn-msg-python" }
+version = "1.4.0"
+source = { editable = "../golded-ftn-msg-python-f1" }
 dependencies = [
     { name = "golded-ftn" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "golded-ftn", editable = "../golded-ftn-python" }]
+requires-dist = [{ name = "golded-ftn", editable = "../golded-ftn-python-r1" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -431,15 +455,55 @@ dev = [
 ]
 
 [[package]]
-name = "golded-ftn-squish"
-version = "1.2.0"
-source = { editable = "../golded-ftn-squish-python" }
+name = "golded-ftn-nodelist"
+version = "0.1.0"
+source = { editable = "../../../golded-ftn-nodelist-python" }
 dependencies = [
     { name = "golded-ftn" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "golded-ftn", editable = "../golded-ftn-python" }]
+requires-dist = [{ name = "golded-ftn", specifier = ">=1.2.2,<2" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "build", specifier = ">=1.2" },
+    { name = "mypy", specifier = ">=1.15" },
+    { name = "pytest", specifier = ">=8" },
+    { name = "ruff", specifier = ">=0.11" },
+    { name = "twine", specifier = ">=6" },
+]
+
+[[package]]
+name = "golded-ftn-packet"
+version = "0.1.0"
+source = { editable = "../../../golded-ftn-packet-python" }
+dependencies = [
+    { name = "golded-ftn" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "golded-ftn", specifier = ">=1.2.2,<2" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "build", specifier = ">=1.2" },
+    { name = "mypy", specifier = ">=1.15" },
+    { name = "pytest", specifier = ">=8" },
+    { name = "ruff", specifier = ">=0.11" },
+    { name = "twine", specifier = ">=6" },
+]
+
+[[package]]
+name = "golded-ftn-squish"
+version = "1.3.0"
+source = { editable = "../golded-ftn-squish-python-f1" }
+dependencies = [
+    { name = "golded-ftn" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "golded-ftn", editable = "../golded-ftn-python-r1" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -453,7 +517,7 @@ dev = [
 
 [[package]]
 name = "golded-ftn-tools"
-version = "1.0.2"
+version = "1.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "golded-ftn" },
@@ -461,6 +525,14 @@ dependencies = [
     { name = "golded-ftn-jam" },
     { name = "golded-ftn-msg" },
     { name = "golded-ftn-squish" },
+]
+
+[package.optional-dependencies]
+network = [
+    { name = "golded-ftn-binkp" },
+    { name = "golded-ftn-nodelist" },
+    { name = "golded-ftn-packet" },
+    { name = "golded-ftn-tosser" },
 ]
 
 [package.dev-dependencies]
@@ -477,11 +549,15 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "golded-ftn", editable = "../golded-ftn-python" },
-    { name = "golded-ftn-hudson", editable = "../golded-ftn-hudson-python" },
-    { name = "golded-ftn-jam", editable = "../golded-ftn-jam-python" },
-    { name = "golded-ftn-msg", editable = "../golded-ftn-msg-python" },
-    { name = "golded-ftn-squish", editable = "../golded-ftn-squish-python" },
+    { name = "golded-ftn", editable = "../golded-ftn-python-r1" },
+    { name = "golded-ftn-binkp", marker = "extra == 'network'", editable = "../../../golded-ftn-binkp-python" },
+    { name = "golded-ftn-hudson", editable = "../golded-ftn-hudson-python-f1" },
+    { name = "golded-ftn-jam", editable = "../golded-ftn-jam-python-f1" },
+    { name = "golded-ftn-msg", editable = "../golded-ftn-msg-python-f1" },
+    { name = "golded-ftn-nodelist", marker = "extra == 'network'", editable = "../../../golded-ftn-nodelist-python" },
+    { name = "golded-ftn-packet", marker = "extra == 'network'", editable = "../../../golded-ftn-packet-python" },
+    { name = "golded-ftn-squish", editable = "../golded-ftn-squish-python-f1" },
+    { name = "golded-ftn-tosser", marker = "extra == 'network'", editable = "../../../golded-ftn-tosser-python" },
 ]
 
 [package.metadata.requires-dev]
@@ -491,6 +567,42 @@ dev = [
     { name = "markdown", specifier = ">=3.7" },
     { name = "mypy", specifier = ">=1.15" },
     { name = "pygments", specifier = ">=2.19" },
+    { name = "pytest", specifier = ">=8" },
+    { name = "ruff", specifier = ">=0.11" },
+    { name = "twine", specifier = ">=6" },
+]
+
+[[package]]
+name = "golded-ftn-tosser"
+version = "0.1.0"
+source = { editable = "../../../golded-ftn-tosser-python" }
+dependencies = [
+    { name = "golded-ftn" },
+    { name = "golded-ftn-binkp" },
+    { name = "golded-ftn-hudson" },
+    { name = "golded-ftn-jam" },
+    { name = "golded-ftn-msg" },
+    { name = "golded-ftn-nodelist" },
+    { name = "golded-ftn-packet" },
+    { name = "golded-ftn-squish" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "golded-ftn", editable = "../golded-ftn-python-r1" },
+    { name = "golded-ftn-binkp", editable = "../../../golded-ftn-binkp-python" },
+    { name = "golded-ftn-hudson", editable = "../golded-ftn-hudson-python-f1" },
+    { name = "golded-ftn-jam", editable = "../golded-ftn-jam-python-f1" },
+    { name = "golded-ftn-msg", editable = "../golded-ftn-msg-python-f1" },
+    { name = "golded-ftn-nodelist", editable = "../../../golded-ftn-nodelist-python" },
+    { name = "golded-ftn-packet", editable = "../../../golded-ftn-packet-python" },
+    { name = "golded-ftn-squish", editable = "../golded-ftn-squish-python-f1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "build", specifier = ">=1.2" },
+    { name = "mypy", specifier = ">=1.15" },
     { name = "pytest", specifier = ">=8" },
     { name = "ruff", specifier = ">=0.11" },
     { name = "twine", specifier = ">=6" },

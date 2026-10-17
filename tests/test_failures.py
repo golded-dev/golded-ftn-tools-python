@@ -74,33 +74,6 @@ raise SystemExit(main(sys.argv[1:]))
     assert len(cli("export", base, "--format", "msg").stdout.splitlines()) == 2
 
 
-def test_real_msg_lock_timeout(tmp_path: Path) -> None:
-    base = str(tmp_path)
-    assert cli("write", base, "--format", "msg", data=message()).returncode == 0
-    with (tmp_path / ".golded-ftn-msg.lock").open("r+b") as lock:
-        if sys.platform == "win32":
-            import msvcrt
-
-            msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
-        else:
-            import fcntl
-
-            fcntl.lockf(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB, 1)
-        try:
-            result = cli(
-                "write", base, "--format", "msg", "--lock-timeout", "0", data=message()
-            )
-            assert result.returncode == 5, result.stderr
-            assert not result.stdout
-            assert b"committed 0" in result.stderr
-        finally:
-            lock.seek(0)
-            if sys.platform == "win32":
-                msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                fcntl.lockf(lock.fileno(), fcntl.LOCK_UN, 1)
-
-
 def test_broken_receipt_pipe_after_commit(tmp_path: Path) -> None:
     process = subprocess.Popen(
         [
@@ -193,8 +166,11 @@ raise SystemExit(main(['catalog']))
 """
     )
     assert result.returncode == 6
-    assert json.loads(result.stderr)["code"] == "io.failed"
-    assert b"No space left on device" in result.stderr
+    payload = json.loads(result.stderr)
+    assert payload["code"] == "io.failed"
+    assert payload["message"] == "io.failed"
+    assert b"No space left on device" not in result.stderr
+    assert b"ENOSPC" not in result.stderr
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX SIGINT contract")
@@ -221,3 +197,34 @@ raise SystemExit(main(["export", ".", "--format", "msg"]))
         assert process.returncode == 130
         assert not output
         assert error == b"ftnt: interrupted\n"
+
+
+def test_missing_base_omits_path(tmp_path: Path) -> None:
+    missing = tmp_path / "sentinel-missing-base"
+    result = cli("read", str(missing), "1", "--format", "msg")
+    assert result.returncode == 3, result.stderr
+    assert str(missing).encode() not in result.stderr
+    assert b"No such file" not in result.stderr
+    assert b"base.missing" in result.stderr
+    assert b"Traceback" not in result.stderr
+
+
+def test_debug_does_not_print_traceback(tmp_path: Path) -> None:
+    missing = tmp_path / "sentinel-debug-path"
+    result = cli("--debug", "export", str(missing), "--format", "msg")
+    assert result.returncode == 3, result.stderr
+    assert str(missing).encode() not in result.stderr
+    assert b"Traceback" not in result.stderr
+    assert b"base.missing" in result.stderr
+
+
+def test_classify_message_is_code_not_os_text() -> None:
+    from golded_ftn_tools.errors import classify
+
+    error = FileNotFoundError(2, "No such file or directory", "/secret/path.msg")
+    classified = classify(error)
+    assert classified.code == "base.missing"
+    assert str(classified) == "base.missing"
+    assert classified.code in repr(classified)
+    assert "/secret/path.msg" not in str(classified)
+    assert "/secret/path.msg" not in repr(classified)

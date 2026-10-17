@@ -1,19 +1,21 @@
 # FTNT💥
 
-Eight command-line tools for FTN message bases, JSON fixtures and text pipes.
-Python 3.12+. MIT licensed.
+Command-line tools for FTN message bases, JSON fixtures, packets, nodelists
+and node operations. Python 3.12+. MIT licensed.
 
-**Status: released on PyPI as 1.0.2.** Install with Python 3.12+:
+This worktree is **1.1.0** (not published). The last public release remains
+`golded-ftn-tools==1.0.2`. Packet, nodelist and node commands require the
+optional `[network]` extra.
 
 ```sh
-python -m pip install golded-ftn-tools==1.0.2
-ftnt --help
+uv sync --extra network
+uv run ftnt --help
 ```
 
-Development uses five sibling Python repositories.
+Base commands still work without the extra. Development uses the R1/F1 format
+worktrees plus packet, nodelist, binkp and tosser checkouts via `uv.sources`.
 
 ```sh
-uv sync --locked
 uv run ftnt create ./fixtures/general --format jam
 uv run ftnt write ./fixtures/general --format jam < examples/message.json
 uv run ftnt export ./fixtures/general --format jam |
@@ -50,6 +52,24 @@ The public manual is the [front page](index.html) and one page per command:
 [heads](heads.html) and [catalog](catalog.html).
 Examples are in `examples/`. Maintainer notes stay in `docs/`.
 The pages share [DESIGN.md](DESIGN.md).
+
+1.1.0 adds `--log-level` (CLI overrides TOML `[logging].level`, default INFO)
+and network commands that require `uv sync --extra network`:
+
+```sh
+uv run ftnt packet write --output mail.pkt < packet.json
+uv run ftnt packet read mail.pkt
+uv run ftnt nodelist parse NODELIST.XXX --domain fidonet --default-zone 2
+uv run ftnt nodelist lookup NODELIST.XXX --domain fidonet --address 2:2/0
+uv run ftnt node --config node.toml check
+uv run ftnt node --config node.toml toss
+uv run ftnt node --config node.toml scan
+uv run ftnt --log-level DEBUG node --config node.toml status
+```
+
+`ftnt node poll` and `ftnt node serve` wrap the binkp client/server and refuse
+non-localhost hosts. Operational errors print a closed code only: no paths,
+bodies, subjects, AreaFix subjects, passwords or CRAM material.
 
 Checks:
 

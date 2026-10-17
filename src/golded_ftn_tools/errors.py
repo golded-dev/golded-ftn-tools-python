@@ -56,14 +56,14 @@ def classify(
     """Map an exception to today's CLI exit status."""
     if isinstance(error, ToolError):
         return error
-    message = str(error)
+    detail = str(error)
     if isinstance(error, InputError):
         code = error.code
         status = 2
     elif isinstance(error, (FileNotFoundError, FileExistsError)):
         if isinstance(error, FileExistsError):
             code = "base.exists"
-        elif message.startswith("message "):
+        elif detail.startswith("message "):
             code = "message.missing"
         else:
             code = "base.missing"
@@ -85,7 +85,7 @@ def classify(
     return ToolError(
         code,
         status,
-        message,
+        code,
         input_record=input_record,
         committed=committed,
     )

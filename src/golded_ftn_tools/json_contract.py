@@ -106,12 +106,8 @@ def _date(data: dict[str, object], format: str) -> datetime | None:
         result = datetime.fromisoformat(value)
     except ValueError as error:
         raise InputError(str(error), code="input.date") from error
-    if format in {"msg", "opus", "hudson"} and result.tzinfo is not None:
+    if format in {"msg", "opus", "hudson", "squish"} and result.tzinfo is not None:
         raise InputError(f"{format} requires a naive posted_at", code="input.date")
-    if format == "squish" and result.tzinfo is None:
-        raise InputError(
-            "squish requires a timezone-aware posted_at", code="input.date"
-        )
     return result
 
 

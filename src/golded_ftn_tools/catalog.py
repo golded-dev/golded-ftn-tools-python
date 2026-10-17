@@ -12,7 +12,7 @@ DATE_RULES: dict[str, str] = {
     "msg": "naive posted_at",
     "opus": "naive posted_at",
     "jam": "naive or timezone-aware posted_at",
-    "squish": "timezone-aware posted_at",
+    "squish": "naive posted_at plus TZUTC or area timezone",
     "hudson": "naive posted_at",
 }
 

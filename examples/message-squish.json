@@ -6,12 +6,16 @@
   "external_id": "2:236/77 fixture-001",
   "from_address": "2:236/77",
   "to_address": "2:236/78",
-  "posted_at": "2026-01-01T12:00:00+00:00",
+  "posted_at": "2026-01-01T12:00:00",
   "attributes_raw": 0,
   "control_lines": [
     {
       "name": "CHRS",
       "value": "CP850 2"
+    },
+    {
+      "name": "TZUTC",
+      "value": "+0000"
     }
   ]
 }

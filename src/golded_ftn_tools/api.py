@@ -43,17 +43,9 @@ class ExportResult:
 
 def _board(format: str, board: int | None, *, required: bool) -> None:
     if board is not None and (format != "hudson" or not 1 <= board <= 200):
-        raise ToolError(
-            "input.structure",
-            2,
-            "--board is only valid for Hudson and must be in 1..200",
-        )
+        raise ToolError("input.structure", 2, "input.structure")
     if required and format == "hudson" and board is None:
-        raise ToolError(
-            "input.structure",
-            2,
-            "Hudson write/read requires --board 1..200",
-        )
+        raise ToolError("input.structure", 2, "input.structure")
 
 
 def _envelope(message: ParsedMessage, format: str, base: Path) -> dict[str, object]:
@@ -111,20 +103,26 @@ def write(
                 raise ToolError(
                     error.code,
                     2,
-                    f"input record {record}: {error}; committed 0",
+                    error.code,
+                    input_record=record,
+                    committed=0,
                 ) from error
-            except UnicodeError as error:
+            except UnicodeError:
                 raise ToolError(
                     "input.structure",
                     2,
-                    f"input record {record}: {error}; committed 0",
-                ) from error
+                    "input.structure",
+                    input_record=record,
+                    committed=0,
+                ) from None
             count = record
         if not count:
             raise ToolError(
                 "input.structure",
                 2,
-                "input record 1: empty batch; committed 0",
+                "input.structure",
+                input_record=1,
+                committed=0,
             )
         spool.seek(0)
         record = 1
@@ -169,7 +167,7 @@ def read(
     """Return one envelope, or the body text when body is set."""
     _board(format, board, required=True)
     if msgno < 1:
-        raise ToolError("input.structure", 2, "msgno must be positive")
+        raise ToolError("input.structure", 2, "input.structure")
     resolved = base.resolve()
     try:
         return _read(
@@ -215,9 +213,7 @@ def _read(
             try:
                 result = session.read(msgno)
             except ConflictError as error:
-                raise ToolError(
-                    "message.missing", 3, f"message {msgno} not found"
-                ) from error
+                raise ToolError("message.missing", 3, "message.missing") from error
             envelope = _envelope(result.message, format, base)
             envelope.update(identity=result.identity, revision=result.revision)
             return envelope
@@ -230,7 +226,7 @@ def _read(
         if body:
             return message.body_text
         return _envelope(message, format, base)
-    raise ToolError("message.missing", 3, f"message {msgno} not found")
+    raise ToolError("message.missing", 3, "message.missing")
 
 
 def export(
@@ -288,9 +284,9 @@ def heads(
     """Index messages without body text. limit 0 reads the whole base."""
     _board(format, board, required=False)
     if limit < 0:
-        raise ToolError("input.structure", 2, "limit must be zero or positive")
+        raise ToolError("input.structure", 2, "input.structure")
     if after is not None and after < 0:
-        raise ToolError("input.structure", 2, "after must be zero or positive")
+        raise ToolError("input.structure", 2, "input.structure")
     resolved = base.resolve()
     issues = [0]
 

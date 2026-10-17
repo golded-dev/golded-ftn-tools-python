@@ -1,4 +1,4 @@
-"""Six commands, redirected UTF-8 streams and per-message commit receipts."""
+"""FTNT commands, redirected UTF-8 streams and per-message commit receipts."""
 
 from __future__ import annotations
 
@@ -7,16 +7,18 @@ import errno
 import math
 import os
 import sys
-import traceback
 from collections.abc import Sequence
 from pathlib import Path
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 from golded_ftn import ReaderIssue
 
 from . import __version__, api
 from .errors import ToolError
 from .json_contract import dump
+
+_NETWORK_COMMANDS = frozenset({"packet", "nodelist", "node"})
+_LOG_LEVELS = ("OFF", "ERROR", "WARNING", "INFO", "DEBUG")
 
 
 def _timeout(value: str) -> float:
@@ -27,6 +29,15 @@ def _timeout(value: str) -> float:
     if not math.isfinite(number) or number < 0:
         raise argparse.ArgumentTypeError("lock timeout must be finite and non-negative")
     return number
+
+
+def _log_level(value: str) -> str:
+    if not value.isascii():
+        raise argparse.ArgumentTypeError("invalid log level")
+    upper = value.upper()
+    if upper not in _LOG_LEVELS:
+        raise argparse.ArgumentTypeError("invalid log level")
+    return upper
 
 
 def parser() -> argparse.ArgumentParser:
@@ -40,12 +51,22 @@ def parser() -> argparse.ArgumentParser:
     )
     root.add_argument("--version", action="version", version=f"ftnt {__version__}")
     root.add_argument(
-        "--debug", action="store_true", help="show error tracebacks on stderr"
+        "--debug",
+        action="store_true",
+        help="accepted for compatibility; operational errors never include tracebacks",
     )
     root.add_argument(
         "--json-errors",
         action="store_true",
         help="print errors as JSON objects on stderr",
+    )
+    root.add_argument(
+        "--log-level",
+        type=_log_level,
+        help=(
+            "node logging level (OFF, ERROR, WARNING, INFO, DEBUG); "
+            "overrides TOML; ignored by other commands"
+        ),
     )
     commands = root.add_subparsers(dest="command", required=True)
     for name in (
@@ -116,7 +137,90 @@ def parser() -> argparse.ArgumentParser:
             sub.add_argument("--charset")
             sub.add_argument("--json", action="store_true")
             sub.add_argument("--no-prefer-quoted", action="store_true")
+    _add_network_commands(commands)
     return root
+
+
+def _flags(sub: argparse.ArgumentParser) -> None:
+    sub.add_argument("--debug", action="store_true", default=argparse.SUPPRESS)
+    sub.add_argument("--json-errors", action="store_true", default=argparse.SUPPRESS)
+
+
+def _nodelist_source(sub: argparse.ArgumentParser) -> None:
+    sub.add_argument("nodelist", type=Path)
+    sub.add_argument("--domain", required=True)
+    sub.add_argument(
+        "--dialect",
+        default="standard",
+        choices=("standard", "boss", "poss", "point", "dk_fakenet", "uboss"),
+    )
+    sub.add_argument("--default-zone", type=int)
+    sub.add_argument("--encoding", default="ascii", choices=("ascii", "cp850"))
+    sub.add_argument(
+        "--crc-policy",
+        default="verify_if_present",
+        choices=("ignore", "verify_if_present", "require_valid"),
+    )
+
+
+def _add_network_commands(commands: Any) -> None:
+    packet = commands.add_parser("packet", help="read and write Type-2 packets")
+    _flags(packet)
+    packet_sub = packet.add_subparsers(dest="packet_command", required=True)
+    pread = packet_sub.add_parser("read")
+    _flags(pread)
+    pread.add_argument("packet", type=Path)
+    pread.add_argument("--fallback-charset", default="CP850")
+    pwrite = packet_sub.add_parser("write")
+    _flags(pwrite)
+    pwrite.add_argument("--output", type=Path)
+
+    nodelist = commands.add_parser(
+        "nodelist", help="parse, look up and export nodelists"
+    )
+    _flags(nodelist)
+    nodelist_sub = nodelist.add_subparsers(dest="nodelist_command", required=True)
+    nparse = nodelist_sub.add_parser("parse")
+    _flags(nparse)
+    _nodelist_source(nparse)
+    nlookup = nodelist_sub.add_parser("lookup")
+    _flags(nlookup)
+    _nodelist_source(nlookup)
+    lookup_group = nlookup.add_mutually_exclusive_group(required=True)
+    lookup_group.add_argument("--address")
+    lookup_group.add_argument("--name")
+    nexport = nodelist_sub.add_parser("export")
+    _flags(nexport)
+    _nodelist_source(nexport)
+    nexport.add_argument(
+        "--format",
+        required=True,
+        choices=("seg", "pvt", "nam", "net", "dup", "txt", "vr7_text"),
+    )
+    nexport.add_argument("--edition-date", required=True)
+    nexport.add_argument("--network-label", required=True)
+    nexport.add_argument("--boss")
+    nexport.add_argument("--output", type=Path)
+
+    node = commands.add_parser(
+        "node", help="tosser check, toss, scan, poll, serve, status, recover"
+    )
+    _flags(node)
+    node.add_argument("--config", type=Path, required=True)
+    node_sub = node.add_subparsers(dest="node_command", required=True)
+    for name in ("check", "toss", "scan", "status", "recover"):
+        child = node_sub.add_parser(name)
+        _flags(child)
+    poll = node_sub.add_parser("poll")
+    _flags(poll)
+    poll.add_argument("--host", default="127.0.0.1")
+    poll.add_argument("--port", type=int, required=True)
+    poll.add_argument("--link-index", type=int, default=0)
+    serve = node_sub.add_parser("serve")
+    _flags(serve)
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=0)
+    serve.add_argument("--wait", action="store_true")
 
 
 def _emit(value: object, stream: BinaryIO | None = None) -> None:
@@ -144,11 +248,14 @@ def _text(value: str) -> None:
 
 def _sentence(error: ToolError) -> str:
     if error.input_record is None:
-        return str(error)
-    return f"input record {error.input_record}; committed {error.committed}: {error}"
+        return error.code
+    return (
+        f"input record {error.input_record}; committed {error.committed}: {error.code}"
+    )
 
 
 def _report(error: ToolError, debug: bool, json_errors: bool) -> int:
+    del debug
     sentence = _sentence(error)
     structured = json_errors or not sys.stderr.isatty()
     if structured:
@@ -165,12 +272,54 @@ def _report(error: ToolError, debug: bool, json_errors: bool) -> int:
         _emit(payload, sys.stderr.buffer)
     else:
         print(f"ftnt: {sentence}", file=sys.stderr)
-    if debug and not structured:
-        traceback.print_exc(file=sys.stderr)
     return error.exit_status
 
 
+def _run_network(args: argparse.Namespace) -> int:
+    try:
+        from . import network
+    except ImportError:
+        raise ToolError("network_missing", 4, "network_missing") from None
+    if args.command == "packet":
+        if args.packet_command == "read":
+            return network.packet_read(
+                args.packet, fallback_charset=args.fallback_charset
+            )
+        return network.packet_write(sys.stdin.buffer.read(), args.output)
+    if args.command == "nodelist":
+        if args.nodelist_command == "parse":
+            return network.nodelist_parse(args.nodelist, args)
+        if args.nodelist_command == "lookup":
+            return network.nodelist_lookup(args.nodelist, args)
+        return network.nodelist_export(args.nodelist, args)
+    log_level = args.log_level
+    config = args.config
+    if args.node_command == "check":
+        return network.node_check(config, log_level)
+    if args.node_command == "toss":
+        return network.node_toss(config, log_level)
+    if args.node_command == "scan":
+        return network.node_scan(config, log_level)
+    if args.node_command == "status":
+        return network.node_status(config, log_level)
+    if args.node_command == "recover":
+        return network.node_recover(config, log_level)
+    if args.node_command == "poll":
+        return network.node_poll(
+            config,
+            log_level,
+            host=args.host,
+            port=args.port,
+            link_index=args.link_index,
+        )
+    return network.node_serve(
+        config, log_level, host=args.host, port=args.port, wait=args.wait
+    )
+
+
 def _run(args: argparse.Namespace) -> int:
+    if args.command in _NETWORK_COMMANDS:
+        return _run_network(args)
     if args.command == "decode":
         _text(api.decode(sys.stdin.buffer.read(), args.charset))
         return 0
@@ -304,8 +453,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("ftnt: interrupted", file=sys.stderr)
         return 130
     except ToolError as error:
-        return _report(error, args.debug, args.json_errors)
+        return _report(error, False, args.json_errors)
     except Exception as error:
+        if args.command in _NETWORK_COMMANDS:
+            from .network import classify_network
+
+            return _report(classify_network(error), False, args.json_errors)
         from .errors import classify
 
-        return _report(classify(error), args.debug, args.json_errors)
+        return _report(classify(error), False, args.json_errors)

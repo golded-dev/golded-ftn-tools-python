@@ -38,7 +38,9 @@ def test_write_reports_committed_count(tmp_path: Path) -> None:
         list(write("msg", tmp_path, [bad]))
     assert caught.value.code == "input.date"
     assert caught.value.exit_status == 2
-    assert "committed 0" in str(caught.value)
+    assert caught.value.input_record == 1
+    assert caught.value.committed == 0
+    assert str(caught.value) == "input.date"
 
 
 def test_heads_limit_omits_body(tmp_path: Path) -> None:

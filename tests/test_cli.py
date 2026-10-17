@@ -60,7 +60,7 @@ def test_help_and_version() -> None:
         )
     )
     assert not result.stderr
-    assert cli("--version").stdout.replace(b"\r\n", b"\n") == b"ftnt 1.0.2\n"
+    assert cli("--version").stdout.replace(b"\r\n", b"\n") == b"ftnt 1.1.0\n"
 
 
 @pytest.mark.parametrize("format", ["msg", "opus", "jam", "squish", "hudson"])
@@ -70,9 +70,19 @@ def test_base_workflow(tmp_path: Path, format: str) -> None:
     result = cli("create", base, "--format", format)
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)["type"] == "create_result"
-    date = "2024-10-05T13:24:56Z" if format == "squish" else "2024-10-05T13:24:56"
+    date = "2024-10-05T13:24:56"
+    extra = (
+        {"control_lines": [{"name": "TZUTC", "value": "+0000"}]}
+        if format == "squish"
+        else {}
+    )
     result = cli(
-        "write", base, "--format", format, *board, data=message(posted_at=date)
+        "write",
+        base,
+        "--format",
+        format,
+        *board,
+        data=message(posted_at=date, **extra),
     )
     assert result.returncode == 0, result.stderr
     assert cli("create", base, "--format", format).returncode == 3
