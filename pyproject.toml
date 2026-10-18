@@ -56,14 +56,3 @@ files = ["src", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
-[tool.uv.sources]
-golded-ftn = { path = "../golded-ftn-python-r1", editable = true }
-golded-ftn-msg = { path = "../golded-ftn-msg-python-f1", editable = true }
-golded-ftn-jam = { path = "../golded-ftn-jam-python-f1", editable = true }
-golded-ftn-squish = { path = "../golded-ftn-squish-python-f1", editable = true }
-golded-ftn-hudson = { path = "../golded-ftn-hudson-python-f1", editable = true }
-golded-ftn-packet = { path = "../../../golded-ftn-packet-python", editable = true }
-golded-ftn-nodelist = { path = "../../../golded-ftn-nodelist-python", editable = true }
-golded-ftn-binkp = { path = "../../../golded-ftn-binkp-python", editable = true }
-golded-ftn-tosser = { path = "../../../golded-ftn-tosser-python", editable = true }

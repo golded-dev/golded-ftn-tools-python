@@ -12,8 +12,7 @@ uv sync --extra network
 uv run ftnt --help
 ```
 
-Base commands still work without the extra. Development uses the R1/F1 format
-worktrees plus packet, nodelist, binkp and tosser checkouts via `uv.sources`.
+Base commands still work without the extra. Candidate verification installs built dependency wheels; there are no local source overrides.
 
 ```sh
 uv run ftnt create ./fixtures/general --format jam
@@ -87,7 +86,15 @@ uv run scripts/build_reading_pages.py
 Distribution checks build dependency wheels from sibling checkouts and run both
 CLI wheels in fresh environments outside the checkout. A separate clean installation of 1.0.2
 resolved all dependencies from PyPI and ran `ftnt --version`. The sdist strips checkout-only uv sources.
-The CI matrix tests Linux, macOS and Windows with Python 3.12 and 3.14.
-Windows is supported from 1.0.2 with `golded-ftn-jam>=1.2.1`. GoldED Opus runtime interoperability remains unverified.
+The candidate CI matrix targets Linux/macOS with Python 3.12–3.14.
+The historical 1.0.2 Windows release is separate from this candidate's platform promises.
+GoldED interoperability is limited to the pinned 3.1.0 profile in the suite manifest.
 Source and release archives are on [GitHub](https://github.com/golded-dev/golded-ftn-tools-python).
 GitHub Pages deployment remains outside this release.
+
+## Candidate 1.1.0
+
+Add optional network extra: packet, nodelist and node commands. Operational failures use closed codes, including legacy commands; broken stdout exits 141. Base operations remain available without network dependencies.
+
+Linux and macOS, Python 3.12–3.14, are the release targets. Windows is outside
+this candidate's test and compatibility promises. See [release preparation](docs/release.md).
