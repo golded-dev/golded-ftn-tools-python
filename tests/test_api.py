@@ -28,7 +28,7 @@ def test_converted_reply_links_follow_messages(tmp_path: Path, format: str) -> N
             ],
         )
     )
-    (source / "1.msg").unlink()
+    (source / "1.MSG").unlink()
     records = [dump(row).encode() for row in export("msg", source)]
     target = tmp_path / "target"
     create(format, target, **({"area_code": "TEST"} if format == "sqlite" else {}))
@@ -78,7 +78,7 @@ def test_conversion_resolves_forward_links_and_drops_missing_targets(
             ],
         )
     )
-    (source / "1.msg").unlink()
+    (source / "1.MSG").unlink()
     target = tmp_path / "target"
     create(format, target, **({"area_code": "TEST"} if format == "sqlite" else {}))
     board = 1 if format == "hudson" else None
