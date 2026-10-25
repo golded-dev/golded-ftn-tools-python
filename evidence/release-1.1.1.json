@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "package": "golded-ftn-tools",
+  "version": "1.1.1",
+  "tag": "v1.1.1",
+  "source_commit": "5edbfbd83a1374fd946fd0d222d05665071978cb",
+  "status": "verified_release_candidate",
+  "platforms": [
+    "Linux",
+    "macOS"
+  ],
+  "python_versions": [
+    "3.12",
+    "3.13",
+    "3.14"
+  ],
+  "artifacts": [
+    {
+      "file": "golded_ftn_tools-1.1.1-py3-none-any.whl",
+      "sha256": "ac2c066032df9b8414d1ba63ce3033fd9f3139b786b70c64eb9171d7a2c630c7"
+    },
+    {
+      "file": "golded_ftn_tools-1.1.1.tar.gz",
+      "sha256": "c340e02df4c60a963e767c6f13ec909c0ef0f5f0ff3e560e5e4a1f8d89e62867"
+    }
+  ],
+  "ci": {
+    "run_id": 40217572261,
+    "url": "https://github.com/golded-dev/golded-ftn-tools-python/actions/runs/40217572261",
+    "result": "six matrix jobs passed"
+  },
+  "local_checks": {
+    "environment": "macOS, CPython 3.14.8; installed wheel with public dependency wheels",
+    "pytest": "171 passed",
+    "ruff_lint": "passed",
+    "ruff_format": "passed",
+    "strict_mypy": "passed",
+    "stubtest": "passed",
+    "twine": "wheel and sdist passed",
+    "distribution_verification": "metadata, contents, identical sdist wheel rebuild and two clean consumer installs passed",
+    "manual_pages": "nine pages passed structural checks; no browser visual check",
+    "whitespace": "git diff --check passed"
+  }
+}
