@@ -1,6 +1,6 @@
 # Release preparation
 
-Version 1.1.0 targets Linux and macOS, Python 3.12–3.14.
+Version 1.1.1 targets Linux and macOS, Python 3.12–3.14.
 Windows is outside this release's test and compatibility promises.
 
 1. Run pytest, Ruff lint/format and strict mypy against the published dependency wheels.

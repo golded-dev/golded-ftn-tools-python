@@ -86,9 +86,11 @@ reject `--area` for other formats and reject `--board` with sqlite. V1 does not
 expose Hudson's separate `scan_path`; use the writer package's documented default.
 Investigate external scan directories before adding an option.
 
-Export envelopes and flat write objects are both accepted. Envelope unwrapping
-drops provenance, source msgno, area metadata, identity and revision; the
-destination writer assigns new numbers.
+Export envelopes and flat write objects are both accepted. The destination
+writer assigns new numbers. Envelope source identities and area metadata scope
+reply-link remapping within the input batch; they are not imported as target
+metadata. Missing link targets are dropped. Flat objects retain target-local
+reply numbers. See JSON.md for the source identity and conversion contract.
 
 Read, parse and structurally validate the entire input before opening a writer
 session. Spool normalized, validated JSONL records to a temporary file instead
@@ -105,6 +107,14 @@ N stops the batch; earlier completed appends remain committed. stdout contains
 receipts only for committed messages. stderr gives the failed record number and
 the committed count. No automatic retry or rollback of earlier successes. No
 guarantee against process death, power loss or an interrupted pipe.
+
+For batches containing export envelopes, append without the envelopes' numeric
+links first, then update those links using actual destination identities.
+Emit each receipt after its link update with the resulting revision. On append
+failure, finalize links within the committed prefix before reporting the error.
+An update failure reports the failing record and committed append count; it
+does not roll back the batch. Keep message payloads in the spool; retain only
+source identities and write results in memory for link resolution.
 
 A broken pipe can occur after append commits but before its receipt reaches the
 consumer. Help and docs must explain this: rerunning can create duplicates.

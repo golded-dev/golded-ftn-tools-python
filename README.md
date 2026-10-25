@@ -3,7 +3,8 @@
 Command-line tools for FTN message bases, JSON fixtures, packets, nodelists
 and node operations. Python 3.12+. MIT licensed.
 
-Version **1.1.0** adds SQLite and network operations. Packet, nodelist and node commands require the
+Version **1.1.1** fixes numeric reply links during conversion. SQLite and network
+operations were added in 1.1.0. Packet, nodelist and node commands require the
 optional `[network]` extra.
 
 ```sh
@@ -29,6 +30,10 @@ The format packages own validation, encoding, locks and rollback.
 validation finishes before opening a writer. Each append commits separately;
 a later failure keeps earlier appends. A broken pipe can hide the receipt of
 an already committed message. Rerunning may create duplicates.
+
+Export envelopes remap numeric reply links within the input batch and drop
+links to omitted messages. Their receipts follow link updates. Flat write
+objects keep destination-local reply numbers unchanged.
 
 `read --body` emits the reader's `body_text` exactly, including any controls
 present there, without adding a newline. `read --revision` adds the writer's

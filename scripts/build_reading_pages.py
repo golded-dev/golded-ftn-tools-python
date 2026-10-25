@@ -169,7 +169,7 @@ def shell(
 <div><span>FTNT💥</span><a href="https://golded-dev.github.io/golded-ftn-python-docs/">Library docs ↗</a></div>
 </header>
 <div class="shell">
-<div class="bar"><span>GOLDED / FTN TOOLS</span><span>RELEASED 1.0.2 · PYTHON 3.12+</span></div>
+<div class="bar"><span>GOLDED / FTN TOOLS</span><span>RELEASED 1.1.1 · PYTHON 3.12+</span></div>
 <div class="layout">
 <aside><div class="sidebar">
 {"".join(nav)}
@@ -177,7 +177,7 @@ def shell(
 </div></aside>
 {"".join(main)}
 </div></div>
-<footer><span>GoldED FTN tools / GoldED.dev</span><span>RELEASED 1.0.2 · MIT LICENSE</span></footer>
+<footer><span>GoldED FTN tools / GoldED.dev</span><span>RELEASED 1.1.1 · MIT LICENSE</span></footer>
 </div>
 {SCRIPT}
 </body>
@@ -195,14 +195,15 @@ def index_page() -> str:
             "install",
             "00",
             "Install",
-            "<p>Install FTNT 1.0.2 from PyPI with Python 3.12 or newer:</p>"
+            "<p>Install FTNT 1.1.1 from PyPI with Python 3.12 or newer:</p>"
             + code_pane(
                 "install-pypi",
                 "PyPI",
-                "python -m pip install golded-ftn-tools==1.0.2\nftnt --help\n",
+                "python -m pip install golded-ftn-tools==1.1.1\nftnt --help\n",
             )
             + "<p>The executable is <code>ftnt</code>. The package name is "
-            "<code>golded-ftn-tools</code>. Linux, macOS and Windows are supported. Keep message bases offline.</p>",
+            "<code>golded-ftn-tools</code>. This release targets Linux and macOS. "
+            "Windows is outside its test and compatibility promises. Keep message bases offline.</p>",
         ),
         (
             "shared",
@@ -322,7 +323,8 @@ def write_page() -> str:
             "<p>Reads one JSON object from stdin and appends it. "
             "<code>--jsonl</code> reads one JSON value per line and appends each "
             "value as its own message. Structural checks finish before the writer "
-            "opens. Each successful append commits on its own and prints a receipt.</p>"
+            "opens. Each successful append commits on its own. Export-envelope "
+            "receipts follow reply-link updates.</p>"
             + code_pane(
                 "write-one",
                 "append one message",
@@ -359,10 +361,15 @@ def write_page() -> str:
             "<tr><td><code>routing_seen_by</code>, <code>routing_path</code></td><td>array of strings</td><td>empty. Order and duplicates are kept.</td></tr>"
             "</tbody></table></div>"
             "<p>Unknown keys, duplicate keys, NaN, Infinity, a BOM and invalid UTF-8 "
-            "are rejected. Booleans are not integers. <code>msgno</code>, "
-            "<code>identity</code>, <code>revision</code> and export envelopes are "
-            "not write input. Append assigns the message number. There is no "
-            "automatic reply-link resolver.</p>"
+            "are rejected. Booleans are not integers. Flat write objects cannot "
+            "include <code>msgno</code>, <code>identity</code> or <code>revision</code>. "
+            "Append assigns the message number. Flat objects keep their "
+            "destination-local reply numbers.</p>"
+            "<p>Export envelopes are also valid input. Their numeric reply links "
+            "are remapped within the same source base, board and area in the "
+            "input batch, including forward links. Links to omitted messages "
+            "are dropped. Source format, base and message number are required; "
+            "duplicate source identities are rejected before writing.</p>"
             + code_pane("write-message", "examples/message.json", message)
             + "<p><code>posted_at</code> is <code>YYYY-MM-DDTHH:MM:SS</code> with an "
             "optional <code>Z</code> or numeric UTC offset, and no microseconds. "
@@ -396,7 +403,12 @@ def write_page() -> str:
             "<p>If record 3 fails after record 1 and 2 committed, those two "
             "messages stay. Stderr names the failing record and the committed "
             "count. A broken pipe can hide a receipt for a message that is "
-            "already stored. Running the same batch again can append duplicates.</p>",
+            "already stored. Running the same batch again can append duplicates.</p>"
+            "<p>Conversion first appends messages without numeric links, then "
+            "updates links using the assigned numbers. Receipts contain the "
+            "revisions after those updates. An interrupted conversion or failed "
+            "link update can leave committed messages with incomplete links. "
+            "The error reports the failing record and committed append count.</p>",
         ),
     ]
     return shell(

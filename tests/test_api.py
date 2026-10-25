@@ -2,13 +2,247 @@
 
 import json
 from pathlib import Path
+from typing import cast
 
 import pytest
+from golded_ftn import MessageIdentity, ParsedMessage
 from test_cli import message
 
 from golded_ftn_tools import catalog, create, export, heads, read, write
 from golded_ftn_tools.errors import ToolError
 from golded_ftn_tools.json_contract import InputError, dump, outgoing
+
+
+@pytest.mark.parametrize("format", ["sqlite", "msg", "opus", "jam", "squish", "hudson"])
+def test_converted_reply_links_follow_messages(tmp_path: Path, format: str) -> None:
+    source = tmp_path / "source"
+    create("msg", source)
+    list(
+        write(
+            "msg",
+            source,
+            [
+                message(subject="deleted"),
+                message(subject="parent"),
+                message(subject="child", reply_to_msgno=2),
+            ],
+        )
+    )
+    (source / "1.MSG").unlink()
+    records = [dump(row).encode() for row in export("msg", source)]
+    target = tmp_path / "target"
+    create(format, target, **({"area_code": "TEST"} if format == "sqlite" else {}))
+    board = 1 if format == "hudson" else None
+    # Existing messages must not become accidental link targets.
+    list(
+        write(
+            format,
+            target,
+            [message(subject="existing"), message(subject="existing too")],
+            board=board,
+        )
+    )
+    receipts = list(write(format, target, records, board=board))
+    rows = {
+        cast(ParsedMessage, row["message"]).subject: cast(ParsedMessage, row["message"])
+        for row in export(format, target, board=board)
+    }
+    parent, child = rows["parent"], rows["child"]
+    assert child.reply_to_msgno == parent.msgno
+    for receipt in receipts:
+        current = read(
+            format,
+            target,
+            cast(MessageIdentity, receipt["identity"]).msgno,
+            board=board,
+            revision=True,
+        )
+        assert isinstance(current, dict)
+        assert current["revision"] == receipt["revision"]
+
+
+@pytest.mark.parametrize("format", ["sqlite", "msg", "opus", "jam", "squish", "hudson"])
+def test_conversion_resolves_forward_links_and_drops_missing_targets(
+    tmp_path: Path, format: str
+) -> None:
+    source = tmp_path / "source"
+    create("msg", source)
+    list(
+        write(
+            "msg",
+            source,
+            [
+                message(subject="deleted"),
+                message(subject="parent", reply_to_msgno=1, reply1st_msgno=3),
+                message(subject="child", reply_to_msgno=2),
+            ],
+        )
+    )
+    (source / "1.MSG").unlink()
+    target = tmp_path / "target"
+    create(format, target, **({"area_code": "TEST"} if format == "sqlite" else {}))
+    board = 1 if format == "hudson" else None
+    list(
+        write(
+            format,
+            target,
+            [dump(row).encode() for row in export("msg", source)],
+            board=board,
+        )
+    )
+    messages = [
+        cast(ParsedMessage, row["message"])
+        for row in export(format, target, board=board)
+    ]
+    parent, child = messages
+    assert not parent.reply_to_msgno
+    assert parent.reply1st_msgno == child.msgno
+    assert child.reply_to_msgno == parent.msgno
+
+
+def test_conversion_maps_next_reply_and_reply_list(tmp_path: Path) -> None:
+    target = tmp_path / "target"
+    create("sqlite", target, area_code="TEST")
+    records = []
+    inputs: list[tuple[int, dict[str, object]]] = [
+        (20, {"reply_next_msgno": 40, "reply_list": [99, 40]}),
+        (40, {"reply_next_msgno": 99}),
+    ]
+    for number, fields in inputs:
+        records.append(
+            json.dumps(
+                {
+                    "type": "message",
+                    "source": {"format": "sqlite", "base": "source"},
+                    "message": {**json.loads(message()), "msgno": number, **fields},
+                }
+            ).encode()
+        )
+    list(write("sqlite", target, records))
+    first = read("sqlite", target, 1)
+    second = read("sqlite", target, 2)
+    assert isinstance(first, dict) and isinstance(second, dict)
+    assert cast(ParsedMessage, first["message"]).reply_next_msgno == 2
+    assert cast(ParsedMessage, second["message"]).reply_next_msgno is None
+    # Squish exposes the first reply-list entry as reply1st_msgno.
+    squish = tmp_path / "squish"
+    create("squish", squish)
+    data = json.loads(records[0])
+    data["message"].pop("reply_next_msgno")
+    other = json.loads(records[1])
+    other["message"].pop("reply_next_msgno")
+    list(write("squish", squish, [json.dumps(row).encode() for row in (data, other)]))
+    first_squish = next(iter(export("squish", squish)))
+    assert cast(ParsedMessage, first_squish["message"]).reply1st_msgno == 3
+
+
+@pytest.mark.parametrize("scope", ["base", "board", "area_code", "area_meta_key"])
+def test_conversion_does_not_link_across_source_areas(
+    tmp_path: Path, scope: str
+) -> None:
+    target = tmp_path / "target"
+    create("sqlite", target, area_code="TEST")
+    parent = {
+        "type": "message",
+        "source": {"format": "sqlite", "base": "source", "board": 1},
+        "message": {
+            **json.loads(message()),
+            "msgno": 20,
+            "area_code": "A",
+            "area_meta_key": "A",
+        },
+    }
+    child = json.loads(json.dumps(parent))
+    child["message"].update(msgno=40, reply_to_msgno=20)
+    if scope in {"base", "board"}:
+        child["source"][scope] = 2 if scope == "board" else "other"
+    else:
+        child["message"][scope] = "B"
+    list(write("sqlite", target, [json.dumps(row).encode() for row in (parent, child)]))
+    result = read("sqlite", target, 2)
+    assert isinstance(result, dict)
+    assert cast(ParsedMessage, result["message"]).reply_to_msgno is None
+
+
+def test_failed_conversion_finalizes_committed_prefix(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    create("sqlite", source, area_code="TEST")
+    list(
+        write(
+            "sqlite",
+            source,
+            [message(subject="parent", reply1st_msgno=2), message(subject="x" * 80)],
+        )
+    )
+    target = tmp_path / "target"
+    create("msg", target)
+    receipts = []
+    with pytest.raises(ToolError) as caught:
+        for receipt in write(
+            "msg", target, [dump(row).encode() for row in export("sqlite", source)]
+        ):
+            receipts.append(receipt)
+    assert caught.value.input_record == 2
+    assert caught.value.committed == 1
+    assert len(receipts) == 1
+    result = read("msg", target, 1, revision=True)
+    assert isinstance(result, dict)
+    assert not cast(ParsedMessage, result["message"]).reply1st_msgno
+    assert result["revision"] == receipts[0]["revision"]
+
+
+@pytest.mark.parametrize(
+    "invalid", ["duplicate", "missing-source", "missing-msgno", "boolean-msgno"]
+)
+def test_conversion_rejects_ambiguous_identity_before_writing(
+    tmp_path: Path, invalid: str
+) -> None:
+    create("sqlite", tmp_path / "target", area_code="TEST")
+    record = {
+        "type": "message",
+        "source": {"format": "msg", "base": "source"},
+        "message": {**json.loads(message()), "msgno": 20},
+    }
+    data = json.loads(json.dumps(record))
+    if invalid == "missing-source":
+        data.pop("source")
+    elif invalid == "missing-msgno":
+        data["message"].pop("msgno")
+    elif invalid == "boolean-msgno":
+        data["message"]["msgno"] = True
+    with pytest.raises(ToolError) as caught:
+        list(
+            write(
+                "sqlite",
+                tmp_path / "target",
+                [json.dumps(row).encode() for row in (record, data)],
+            )
+        )
+    assert caught.value.code == "input.structure"
+    assert caught.value.input_record == 2
+    assert caught.value.committed == 0
+    assert list(export("sqlite", tmp_path / "target")) == []
+
+
+def test_mixed_write_keeps_flat_links_in_target_numbering(tmp_path: Path) -> None:
+    target = tmp_path / "target"
+    create("sqlite", target, area_code="TEST")
+    list(write("sqlite", target, [message(subject="existing")]))
+    envelope = {
+        "type": "message",
+        "source": {"format": "msg", "base": "source"},
+        "message": {**json.loads(message()), "msgno": 20, "reply_to_msgno": 99},
+    }
+    list(
+        write(
+            "sqlite", target, [json.dumps(envelope).encode(), message(reply_to_msgno=1)]
+        )
+    )
+    converted = read("sqlite", target, 2)
+    flat = read("sqlite", target, 3)
+    assert isinstance(converted, dict) and isinstance(flat, dict)
+    assert cast(ParsedMessage, converted["message"]).reply_to_msgno is None
+    assert cast(ParsedMessage, flat["message"]).reply_to_msgno == 1
 
 
 def test_create_write_read_roundtrip(
