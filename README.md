@@ -3,8 +3,7 @@
 Command-line tools for FTN message bases, JSON fixtures, packets, nodelists
 and node operations. Python 3.12+. MIT licensed.
 
-This worktree is **1.1.0** (not published). The last public release remains
-`golded-ftn-tools==1.0.2`. Packet, nodelist and node commands require the
+Version **1.1.0** adds SQLite and network operations. Packet, nodelist and node commands require the
 optional `[network]` extra.
 
 ```sh
@@ -12,7 +11,7 @@ uv sync --extra network
 uv run ftnt --help
 ```
 
-Base commands still work without the extra. Candidate verification installs built dependency wheels; there are no local source overrides.
+Base commands still work without the extra. Release verification installs built wheels; there are no local source overrides.
 
 ```sh
 uv run ftnt create ./fixtures/general --format jam
@@ -83,18 +82,18 @@ uv run python scripts/verify_distribution.py
 uv run scripts/build_reading_pages.py
 ```
 
-Distribution checks build dependency wheels from sibling checkouts and run both
-CLI wheels in fresh environments outside the checkout. A separate clean installation of 1.0.2
-resolved all dependencies from PyPI and ran `ftnt --version`. The sdist strips checkout-only uv sources.
-The candidate CI matrix targets Linux/macOS with Python 3.12–3.14.
-The historical 1.0.2 Windows release is separate from this candidate's platform promises.
+Distribution checks rebuild the wheel from the sdist and run both CLI wheels in
+fresh environments outside the checkout. A separate clean installation resolves
+all dependencies from PyPI and runs `ftnt --version`. The sdist contains no
+checkout-only uv sources. CI targets Linux/macOS with Python 3.12–3.14.
+The historical 1.0.2 Windows release is separate from 1.1.0's platform promises.
 GoldED interoperability is limited to the pinned 3.1.0 profile in the suite manifest.
 Source and release archives are on [GitHub](https://github.com/golded-dev/golded-ftn-tools-python).
 GitHub Pages deployment remains outside this release.
 
-## Candidate 1.1.0
+## Version 1.1.0
 
 Add optional network extra: packet, nodelist and node commands. Operational failures use closed codes, including legacy commands; broken stdout exits 141. Base operations remain available without network dependencies.
 
 Linux and macOS, Python 3.12–3.14, are the release targets. Windows is outside
-this candidate's test and compatibility promises. See [release preparation](docs/release.md).
+this release's test and compatibility promises. See [release preparation](docs/release.md).
