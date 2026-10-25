@@ -109,10 +109,32 @@ def parser() -> argparse.ArgumentParser:
             sub.add_argument(
                 "--format",
                 required=True,
-                choices=("msg", "opus", "jam", "squish", "hudson"),
+                choices=("msg", "opus", "jam", "squish", "hudson", "sqlite"),
+            )
+        if name == "create":
+            sub.add_argument(
+                "--area-code",
+                help="SQLite area code (required for --format sqlite)",
+            )
+            sub.add_argument(
+                "--area-name",
+                help="SQLite area display name (defaults to --area-code)",
+            )
+            sub.add_argument(
+                "--kind",
+                choices=("echomail", "netmail"),
+                help="SQLite area kind (default echomail)",
+            )
+            sub.add_argument(
+                "--origin",
+                help="SQLite default origin address, e.g. 2:230/0",
             )
         if name in {"write", "read", "export", "heads"}:
             sub.add_argument("--board", type=int, help="Hudson board, 1..200")
+            sub.add_argument(
+                "--area",
+                help="SQLite area code (required only for multi-area databases)",
+            )
         if name == "write":
             sub.add_argument("--jsonl", action="store_true")
             sub.add_argument("--encoding", default="CP850")
@@ -341,7 +363,16 @@ def _run(args: argparse.Namespace) -> int:
     if args.command == "heads":
         return _heads(args)
     if args.command == "create":
-        _emit(api.create(args.format, args.base))
+        _emit(
+            api.create(
+                args.format,
+                args.base,
+                area_code=args.area_code,
+                area_name=args.area_name,
+                kind=args.kind,
+                origin=args.origin,
+            )
+        )
         return 0
     if args.command == "write":
         records = sys.stdin.buffer if args.jsonl else [sys.stdin.buffer.read()]
@@ -350,6 +381,7 @@ def _run(args: argparse.Namespace) -> int:
             args.base,
             records,
             board=args.board,
+            area=args.area,
             encoding=args.encoding,
             lock_timeout=args.lock_timeout,
         ):
@@ -361,6 +393,7 @@ def _run(args: argparse.Namespace) -> int:
             args.base,
             args.msgno,
             board=args.board,
+            area=args.area,
             fallback_charset=args.fallback_charset,
             lock_timeout=args.lock_timeout,
             body=args.body,
@@ -382,6 +415,7 @@ def _run(args: argparse.Namespace) -> int:
         args.format,
         args.base,
         board=args.board,
+        area=args.area,
         fallback_charset=args.fallback_charset,
         archive=args.archive,
         on_issue=on_issue if args.archive else None,
@@ -402,6 +436,7 @@ def _heads(args: argparse.Namespace) -> int:
         args.format,
         args.base,
         board=args.board,
+        area=args.area,
         fallback_charset=args.fallback_charset,
         archive=args.archive,
         limit=args.limit,

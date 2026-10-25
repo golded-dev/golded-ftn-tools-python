@@ -31,6 +31,7 @@ format-specific and checked structurally before writing:
 | JAM | Naive (interpreted as UTC) or timezone-aware datetime |
 | Squish | Timezone-aware datetime; writer converts to UTC |
 | Hudson | Naive datetime; no timezone |
+| SQLite | Naive or timezone-aware datetime |
 
 Opus dates use both DOS written words and the textual date. The local MSG 1.3.0
 writer accepts their shared 1980–2069 range and rejects odd seconds. Omitted dates
@@ -58,8 +59,15 @@ base number. Do not conceal contradictory controls, MSGID or charset declaration
 
 Reject unknown top-level/control keys, duplicate keys, NaN/Infinity, incorrect
 nested types, BOM and invalid UTF-8 with a record number. `provenance`, `msgno`,
-`identity`, `revision` and export envelopes are not write input. Provenance comes
-from the source/read operation, not an imported claim about the new record.
+`identity`, `revision` and other non-write fields inside an export envelope are
+dropped when unwrapping. Flat write objects must not include those fields.
+Provenance comes from the source/read operation, not an imported claim about the
+new record.
+
+A `type=message` export envelope is valid write input for every destination
+format. The CLI maps nested `control_lines.kludges` to `control_lines` and nested
+`seen_by` / `path` to routing arrays. Microseconds in exported `posted_at` are
+stripped to match the write date grammar.
 
 No arbitrary binary header import or requested message number. Append assigns
 the format's number. Fixture authors manage forward reply links; there is no
@@ -126,7 +134,17 @@ Location is illustrative; emit the writer's actual tuple unchanged. Map identity
 and revision from `WriteResult`, never reconstruct them. `input_record` is
 one-based. Do not emit an extra summary line on stdout.
 
-Export can produce new write input with an explicit mapping:
+Export pipes directly into write for any format pair:
+
+```sh
+ftnt export ./old --format jam |
+  ftnt write ./new.sqlite3 --format sqlite --jsonl
+
+ftnt export ./area.sqlite3 --format sqlite |
+  ftnt write ./copy --format jam --jsonl
+```
+
+Optional jq still works for field subsetting; it is not required for a pour:
 
 ```sh
 ftnt export ./old --format jam |
@@ -134,7 +152,9 @@ ftnt export ./old --format jam |
   ftnt write ./new --format jam --jsonl
 ```
 
-This intentionally selects only some fields. It is not a complete clone.
+Cross-format pipes preserve shared message fields. They are not byte-identical
+clones: destination writers assign new numbers and may reject format-private
+constraints (encoding, dates, Hudson board, netmail addresses).
 
 ## Repair and issues
 

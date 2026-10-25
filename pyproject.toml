@@ -16,7 +16,11 @@ dependencies = [
   "golded-ftn-jam>=1.3.0,<2",
   "golded-ftn-squish>=1.3.0,<2",
   "golded-ftn-hudson>=1.3.0,<2",
+  "golded-ftn-sqlite>=0.1.0,<1",
 ]
+
+[tool.uv.sources]
+golded-ftn-sqlite = { path = "../golded-ftn-sqlite-python" }
 
 [project.optional-dependencies]
 network = [

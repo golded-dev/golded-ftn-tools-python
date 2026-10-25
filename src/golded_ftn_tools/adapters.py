@@ -4,6 +4,7 @@ from contextlib import AbstractContextManager
 from pathlib import Path
 
 from golded_ftn import (
+    FtnAddress,
     MessageBaseReader,
     MessageWriterSession,
     ParsedMessage,
@@ -13,10 +14,17 @@ from golded_ftn import (
 from golded_ftn_hudson import HudsonReader, HudsonWriter
 from golded_ftn_jam import JamReader, JamWriter
 from golded_ftn_msg import MsgReader, MsgWriter
+from golded_ftn_sqlite import (
+    AreaDefinition,
+    AreaKind,
+    SqliteDatabase,
+    SqliteReader,
+    SqliteWriter,
+)
 from golded_ftn_squish import SquishReader, SquishWriter
 
 
-def reader(format: str) -> MessageBaseReader:
+def reader(format: str, *, area: str | None = None) -> MessageBaseReader:
     match format:
         case "msg":
             return MsgReader()
@@ -28,11 +36,21 @@ def reader(format: str) -> MessageBaseReader:
             return SquishReader()
         case "hudson":
             return HudsonReader()
+        case "sqlite":
+            return SqliteReader(area)
         case _:
             raise ValueError(f"Unknown format: {format}")
 
 
-def create(format: str, base: Path) -> None:
+def create(
+    format: str,
+    base: Path,
+    *,
+    area_code: str | None = None,
+    area_name: str | None = None,
+    kind: str = "echomail",
+    origin: str | None = None,
+) -> None:
     match format:
         case "msg" | "opus":
             MsgWriter().create(
@@ -44,6 +62,21 @@ def create(format: str, base: Path) -> None:
             SquishWriter().create(base)
         case "hudson":
             HudsonWriter().create(base)
+        case "sqlite":
+            if area_code is None:
+                raise ValueError("sqlite create requires area_code")
+            default_origin = (
+                FtnAddress.from_string(origin) if origin is not None else None
+            )
+            SqliteDatabase.create(
+                base,
+                area=AreaDefinition(
+                    code=area_code,
+                    name=area_name if area_name is not None else area_code,
+                    kind=AreaKind(kind),
+                    default_origin=default_origin,
+                ),
+            )
         case _:
             raise ValueError(f"Unknown format: {format}")
 
@@ -53,6 +86,8 @@ def session(
     base: Path,
     board: int | None,
     options: WriterOptions,
+    *,
+    area: str | None = None,
 ) -> AbstractContextManager[MessageWriterSession]:
     match format:
         case "msg" | "opus":
@@ -66,6 +101,8 @@ def session(
         case "hudson":
             assert board is not None
             return HudsonWriter().open(base, board, options)
+        case "sqlite":
+            return SqliteWriter(area).open(base, options)
         case _:
             raise ValueError(f"Unknown format: {format}")
 

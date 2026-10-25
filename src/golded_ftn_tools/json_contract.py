@@ -5,10 +5,31 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import asdict, is_dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import cast
 
 from golded_ftn import ControlLine, FtnAddress, OutgoingMessage
+
+_WRITE_FIELDS = frozenset(
+    {
+        "from_name",
+        "to_name",
+        "subject",
+        "body_text",
+        "external_id",
+        "from_address",
+        "to_address",
+        "posted_at",
+        "attributes_raw",
+        "control_lines",
+        "reply_to_msgno",
+        "reply1st_msgno",
+        "reply_next_msgno",
+        "reply_list",
+        "routing_seen_by",
+        "routing_path",
+    }
+)
 
 
 class InputError(ValueError):
@@ -106,27 +127,67 @@ def _date(data: dict[str, object], format: str) -> datetime | None:
         result = datetime.fromisoformat(value)
     except ValueError as error:
         raise InputError(str(error), code="input.date") from error
-    if format in {"msg", "opus", "hudson", "squish"} and result.tzinfo is not None:
+    if format in {"msg", "opus", "hudson"} and result.tzinfo is not None:
         raise InputError(f"{format} requires a naive posted_at", code="input.date")
     return result
 
 
-def outgoing(data: dict[str, object], format: str) -> OutgoingMessage:
-    required = {"from_name", "to_name", "subject", "body_text"}
-    allowed = required | {
-        "external_id",
-        "from_address",
-        "to_address",
-        "posted_at",
-        "attributes_raw",
-        "control_lines",
-        "reply_to_msgno",
-        "reply1st_msgno",
-        "reply_next_msgno",
-        "reply_list",
-        "routing_seen_by",
-        "routing_path",
+def unwrap_write_record(data: dict[str, object]) -> dict[str, object]:
+    """Map an export envelope or flat object into write-input fields."""
+    if data.get("type") != "message":
+        return data
+    message = data.get("message")
+    if not isinstance(message, dict):
+        raise InputError("message envelope requires a message object")
+    payload: dict[str, object] = {
+        key: value for key, value in message.items() if key in _WRITE_FIELDS
     }
+    controls = message.get("control_lines")
+    if isinstance(controls, dict):
+        if "control_lines" not in payload or isinstance(
+            payload.get("control_lines"), dict
+        ):
+            kludges = controls.get("kludges", [])
+            if not isinstance(kludges, list):
+                raise InputError("control_lines.kludges must be an array")
+            payload["control_lines"] = kludges
+        if "routing_seen_by" not in payload:
+            seen_by = controls.get("seen_by", [])
+            if not isinstance(seen_by, list):
+                raise InputError("control_lines.seen_by must be an array")
+            payload["routing_seen_by"] = seen_by
+        if "routing_path" not in payload:
+            path = controls.get("path", [])
+            if not isinstance(path, list):
+                raise InputError("control_lines.path must be an array")
+            payload["routing_path"] = path
+    elif "control_lines" in payload and not isinstance(payload["control_lines"], list):
+        raise InputError("control_lines must be an array or nested export object")
+    posted_at = payload.get("posted_at")
+    if isinstance(posted_at, str) and "." in posted_at:
+        # Export may include microseconds; write input forbids them.
+        head, _, rest = posted_at.partition(".")
+        suffix = ""
+        for index, char in enumerate(rest):
+            if not char.isdigit():
+                suffix = rest[index:]
+                break
+        payload["posted_at"] = head + suffix
+    return payload
+
+
+def outgoing(data: dict[str, object], format: str) -> OutgoingMessage:
+    exported = data.get("type") == "message"
+    source = data.get("source")
+    source_format = source.get("format") if isinstance(source, dict) else None
+    data = unwrap_write_record(data)
+    if exported and isinstance(data.get("external_id"), str):
+        if cast(str, data["external_id"]).startswith("hash:sha256:"):
+            data.pop("external_id")
+    if exported and source_format != format:
+        data.pop("attributes_raw", None)
+    required = {"from_name", "to_name", "subject", "body_text"}
+    allowed = required | (_WRITE_FIELDS - required)
     if unknown := data.keys() - allowed:
         raise InputError(f"unknown fields: {', '.join(sorted(unknown))}")
     if missing := required - data.keys():
@@ -147,6 +208,14 @@ def outgoing(data: dict[str, object], format: str) -> OutgoingMessage:
                 raw=_string(item.get("raw", ""), "control.raw"),
             )
         )
+    posted_at = _date(data, format if not exported else "export")
+    if exported and posted_at is not None:
+        if posted_at.tzinfo is not None:
+            posted_at = posted_at.astimezone(UTC).replace(tzinfo=None)
+        if format == "squish" and not any(
+            control.name.upper() == "TZUTC" for control in controls
+        ):
+            controls.append(ControlLine(name="TZUTC", value="+0000", raw=""))
     return OutgoingMessage(
         from_name=_string(data["from_name"], "from_name"),
         to_name=_string(data["to_name"], "to_name"),
@@ -155,7 +224,7 @@ def outgoing(data: dict[str, object], format: str) -> OutgoingMessage:
         external_id=_optional_string(data, "external_id"),
         from_address=_address(data, "from_address"),
         to_address=_address(data, "to_address"),
-        posted_at=_date(data, format),
+        posted_at=posted_at,
         attributes_raw=_optional_integer(data, "attributes_raw"),
         control_lines=tuple(controls),
         reply_to_msgno=_optional_integer(data, "reply_to_msgno"),

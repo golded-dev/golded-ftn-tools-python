@@ -24,8 +24,10 @@ direct binary record serialization in CLI code.
   TTY and a pipe. Help and version are ordinary text.
 - JSON is UTF-8 without a BOM, with readable Unicode and a trailing LF.
 - Message streams and write results are JSONL: one independent object per line.
-- All base commands require `--format msg|opus|jam|squish|hudson` in v1. No heuristic
+- All base commands require `--format msg|opus|jam|squish|hudson|sqlite`. No heuristic
   format detection or metadata sidecar. Examples must include the flag.
+- `ftnt export` JSONL is valid `ftnt write --jsonl` input for every format pair.
+  Export envelopes unwrap automatically; jq is optional field-subsetting, not required.
 - Format packages own validation, locking, encoding and commit boundaries. The
   CLI must not import their private modules or duplicate their serialization.
 - Bases must be offline with respect to GoldED and other external users during
@@ -56,16 +58,20 @@ Use shell redirection for input files; another input-file option is unnecessary.
 ### create
 
 MSG (FTSC or Opus) and Hudson use a directory. JAM and Squish use a basename without a suffix,
-e.g. `./fixtures/general`, not `general.JHR` or `general.SQD`.
+e.g. `./fixtures/general`, not `general.JHR` or `general.SQD`. SQLite uses a database
+file path, e.g. `./fixtures/general.sqlite3`.
 
 Existing base files are rejected through the writer's `create`. No `--force`,
 `--overwrite` or implicit creation in `write`. Hudson creation applies to the
-whole base and does not accept `--board`. Auxiliary files and lastread
-initialization belong to the writer. Emit a create result only after success.
+whole base and does not accept `--board`. SQLite create requires `--area-code`;
+`--area-name` defaults to the code, `--kind` defaults to `echomail`, and
+`--origin` is optional. Auxiliary files and lastread initialization belong to the
+writer. Emit a create result only after success.
 
 ```sh
 ftnt create ./fixtures/hudson --format hudson
 ftnt write ./fixtures/hudson --format hudson --board 42 < examples/message.json
+ftnt create ./fixtures/general.sqlite3 --format sqlite --area-code FIDO.GENERAL
 ```
 
 ### write
@@ -75,9 +81,14 @@ blank lines, duplicate JSON keys and trailing data are rejected. Reject an empty
 
 Shared flags: `--encoding` (default CP850) and `--lock-timeout` (default five
 seconds, finite number >= 0). Hudson requires `--board 1..200`; reject that flag
-for other formats. V1 does not expose Hudson's separate `scan_path`; use the
-writer package's documented default. Investigate external scan directories before
-adding an option.
+for other formats. SQLite accepts optional `--area` for multi-area databases;
+reject `--area` for other formats and reject `--board` with sqlite. V1 does not
+expose Hudson's separate `scan_path`; use the writer package's documented default.
+Investigate external scan directories before adding an option.
+
+Export envelopes and flat write objects are both accepted. Envelope unwrapping
+drops provenance, source msgno, area metadata, identity and revision; the
+destination writer assigns new numbers.
 
 Read, parse and structurally validate the entire input before opening a writer
 session. Spool normalized, validated JSONL records to a temporary file instead
@@ -105,7 +116,8 @@ Default output follows [JSON.md](JSON.md). `read` matches the actual
 number is a distinct error. Scanning through the reader is acceptable in v1;
 no constant-time lookup promise. Hudson requires `--board` for `read`.
 Hudson `export` may omit board to export all boards or select one explicitly.
-Reject `--board` for other formats.
+Reject `--board` for other formats. SQLite may take `--area` when the database
+has several areas.
 
 `read --body` emits only `body_text` as UTF-8, without repair or an added newline.
 It cannot be combined with `--revision`. `read --revision` uses the writer

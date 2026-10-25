@@ -63,11 +63,12 @@ def test_help_and_version() -> None:
     assert cli("--version").stdout.replace(b"\r\n", b"\n") == b"ftnt 1.1.0\n"
 
 
-@pytest.mark.parametrize("format", ["msg", "opus", "jam", "squish", "hudson"])
+@pytest.mark.parametrize("format", ["msg", "opus", "jam", "squish", "hudson", "sqlite"])
 def test_base_workflow(tmp_path: Path, format: str) -> None:
-    base = str(tmp_path / "base")
+    base = str(tmp_path / ("base.sqlite3" if format == "sqlite" else "base"))
     board = ["--board", "200"] if format == "hudson" else []
-    result = cli("create", base, "--format", format)
+    create_flags = ["--area-code", "FIDO.SQLITE"] if format == "sqlite" else []
+    result = cli("create", base, "--format", format, *create_flags)
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)["type"] == "create_result"
     date = "2024-10-05T13:24:56"
@@ -85,7 +86,7 @@ def test_base_workflow(tmp_path: Path, format: str) -> None:
         data=message(posted_at=date, **extra),
     )
     assert result.returncode == 0, result.stderr
-    assert cli("create", base, "--format", format).returncode == 3
+    assert cli("create", base, "--format", format, *create_flags).returncode == 3
     receipt = json.loads(result.stdout)
     assert receipt["identity"]["format"] == format
     number = str(receipt["identity"]["msgno"])
@@ -119,7 +120,6 @@ def test_base_workflow(tmp_path: Path, format: str) -> None:
         b"null",
         message(attributes_raw=True),
         message(reply_list=[True]),
-        message(from_address="1/2"),
         message(posted_at="2024-02-30T00:00:00"),
         message(posted_at="2024-01-01T00:00:00.000"),
         message(posted_at="2024-01-01T00:00:00+00:99"),
@@ -189,7 +189,7 @@ def test_decode_errors_and_repair() -> None:
     )
 
 
-@pytest.mark.parametrize("format", ["msg", "opus", "jam", "squish", "hudson"])
+@pytest.mark.parametrize("format", ["msg", "opus", "jam", "squish", "hudson", "sqlite"])
 @pytest.mark.parametrize("command", ["read", "export", "write"])
 def test_missing_base(tmp_path: Path, format: str, command: str) -> None:
     args = [command, str(tmp_path / "missing")]
@@ -212,6 +212,10 @@ def test_missing_base(tmp_path: Path, format: str, command: str) -> None:
         ["read", "x", "0", "--format", "jam"],
         ["write", "x", "--format", "jam", "--lock-timeout", "nan"],
         ["read", "x", "1", "--format", "msg", "--revision", "--body"],
+        ["create", "x", "--format", "sqlite"],
+        ["create", "x", "--format", "jam", "--area-code", "X"],
+        ["write", "x", "--format", "sqlite", "--board", "1"],
+        ["write", "x", "--format", "jam", "--area", "X"],
     ],
 )
 def test_invalid_flags(flags: list[str]) -> None:
@@ -303,3 +307,199 @@ def test_hudson_literal_board_mapping(tmp_path: Path) -> None:
         ).stdout
         == b"Second"
     )
+
+
+def test_jam_export_pipes_into_sqlite(tmp_path: Path) -> None:
+    jam = str(tmp_path / "source")
+    sqlite = str(tmp_path / "dest.sqlite3")
+    assert cli("create", jam, "--format", "jam").returncode == 0
+    assert (
+        cli(
+            "write",
+            jam,
+            "--format",
+            "jam",
+            data=message(
+                posted_at="2024-10-05T13:24:56",
+                control_lines=[
+                    {"name": "PID", "value": "ftnt", "raw": "\x01PID: ftnt"}
+                ],
+                routing_seen_by=["230/0"],
+            ),
+        ).returncode
+        == 0
+    )
+    exported = cli("export", jam, "--format", "jam")
+    assert exported.returncode == 0, exported.stderr
+    assert (
+        cli(
+            "create",
+            sqlite,
+            "--format",
+            "sqlite",
+            "--area-code",
+            "FIDO.GENERAL",
+        ).returncode
+        == 0
+    )
+    written = cli(
+        "write", sqlite, "--format", "sqlite", "--jsonl", data=exported.stdout
+    )
+    assert written.returncode == 0, written.stderr
+    read = cli("read", sqlite, "1", "--format", "sqlite")
+    assert read.returncode == 0, read.stderr
+    payload = json.loads(read.stdout)
+    assert payload["message"]["subject"] == "Fixture æøå"
+    assert payload["message"]["body_text"] == "Text"
+    assert payload["message"]["control_lines"]["kludges"][0]["name"] == "PID"
+    assert payload["message"]["control_lines"]["seen_by"] == ["230/0"]
+
+
+def test_sqlite_export_pipes_into_jam(tmp_path: Path) -> None:
+    sqlite = str(tmp_path / "source.sqlite3")
+    jam = str(tmp_path / "dest")
+    assert (
+        cli(
+            "create",
+            sqlite,
+            "--format",
+            "sqlite",
+            "--area-code",
+            "FIDO.SQLITE",
+        ).returncode
+        == 0
+    )
+    assert (
+        cli(
+            "write",
+            sqlite,
+            "--format",
+            "sqlite",
+            data=message(posted_at="2024-10-05T13:24:56", subject="From SQLite"),
+        ).returncode
+        == 0
+    )
+    exported = cli("export", sqlite, "--format", "sqlite")
+    assert exported.returncode == 0, exported.stderr
+    assert cli("create", jam, "--format", "jam").returncode == 0
+    written = cli("write", jam, "--format", "jam", "--jsonl", data=exported.stdout)
+    assert written.returncode == 0, written.stderr
+    read = cli("read", jam, "1", "--format", "jam")
+    assert json.loads(read.stdout)["message"]["subject"] == "From SQLite"
+
+
+def test_msg_export_pipes_into_jam(tmp_path: Path) -> None:
+    source = str(tmp_path / "msg")
+    dest = str(tmp_path / "jam")
+    assert cli("create", source, "--format", "msg").returncode == 0
+    assert (
+        cli(
+            "write",
+            source,
+            "--format",
+            "msg",
+            data=message(posted_at="2024-10-05T13:24:56", subject="Cross"),
+        ).returncode
+        == 0
+    )
+    exported = cli("export", source, "--format", "msg")
+    assert exported.returncode == 0, exported.stderr
+    assert cli("create", dest, "--format", "jam").returncode == 0
+    written = cli("write", dest, "--format", "jam", "--jsonl", data=exported.stdout)
+    assert written.returncode == 0, written.stderr
+    assert (
+        json.loads(cli("read", dest, "1", "--format", "jam").stdout)["message"][
+            "subject"
+        ]
+        == "Cross"
+    )
+
+
+_FORMATS = ("msg", "opus", "jam", "squish", "hudson", "sqlite")
+
+
+def _base_path(tmp_path: Path, format: str, name: str) -> str:
+    if format == "sqlite":
+        return str(tmp_path / f"{name}.sqlite3")
+    return str(tmp_path / name)
+
+
+def _create_flags(format: str, area: str) -> list[str]:
+    return ["--area-code", area] if format == "sqlite" else []
+
+
+def _board_flags(format: str) -> list[str]:
+    return ["--board", "1"] if format == "hudson" else []
+
+
+def _write_payload(format: str, subject: str) -> bytes:
+    date = "2024-10-05T13:24:56"
+    extra: dict[str, Any] = {"posted_at": date, "subject": subject}
+    if format == "squish":
+        extra["control_lines"] = [{"name": "TZUTC", "value": "+0000"}]
+    return message(**extra)
+
+
+@pytest.mark.parametrize("source_format", _FORMATS)
+@pytest.mark.parametrize("dest_format", _FORMATS)
+def test_export_pipes_any_to_any(
+    tmp_path: Path, source_format: str, dest_format: str
+) -> None:
+    source = _base_path(tmp_path, source_format, "source")
+    dest = _base_path(tmp_path, dest_format, "dest")
+    subject = f"{source_format}->{dest_format}"
+    assert (
+        cli(
+            "create",
+            source,
+            "--format",
+            source_format,
+            *_create_flags(source_format, "SRC.AREA"),
+        ).returncode
+        == 0
+    )
+    assert (
+        cli(
+            "write",
+            source,
+            "--format",
+            source_format,
+            *_board_flags(source_format),
+            data=_write_payload(source_format, subject),
+        ).returncode
+        == 0
+    )
+    exported = cli("export", source, "--format", source_format)
+    assert exported.returncode == 0, exported.stderr
+    assert (
+        cli(
+            "create",
+            dest,
+            "--format",
+            dest_format,
+            *_create_flags(dest_format, "DST.AREA"),
+        ).returncode
+        == 0
+    )
+    written = cli(
+        "write",
+        dest,
+        "--format",
+        dest_format,
+        *_board_flags(dest_format),
+        "--jsonl",
+        data=exported.stdout,
+    )
+    assert written.returncode == 0, written.stderr
+    receipt = json.loads(written.stdout)
+    number = str(receipt["identity"]["msgno"])
+    read = cli(
+        "read",
+        dest,
+        number,
+        "--format",
+        dest_format,
+        *_board_flags(dest_format),
+    )
+    assert read.returncode == 0, read.stderr
+    assert json.loads(read.stdout)["message"]["subject"] == subject

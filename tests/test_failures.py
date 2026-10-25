@@ -45,8 +45,8 @@ from golded_ftn_tools import adapters
 from golded_ftn_tools.cli import main
 original = adapters.session
 @contextmanager
-def session(*args):
-    with original(*args) as actual:
+def session(*args, **kwargs):
+    with original(*args, **kwargs) as actual:
         class Wrapped:
             count = 0
             def append(self, message):
@@ -184,7 +184,7 @@ class Reader:
         print("ready", file=sys.stderr, flush=True)
         threading.Event().wait()
         return ()
-adapters.reader = lambda _: Reader()
+adapters.reader = lambda *args, **kwargs: Reader()
 raise SystemExit(main(["export", ".", "--format", "msg"]))
 """
     with subprocess.Popen(

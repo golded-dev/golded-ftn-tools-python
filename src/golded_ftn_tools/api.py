@@ -48,6 +48,30 @@ def _board(format: str, board: int | None, *, required: bool) -> None:
         raise ToolError("input.structure", 2, "input.structure")
 
 
+def _area(format: str, area: str | None) -> None:
+    if area is not None and format != "sqlite":
+        raise ToolError("input.structure", 2, "input.structure")
+
+
+def _sqlite_create_options(
+    format: str,
+    *,
+    area_code: str | None,
+    area_name: str | None,
+    kind: str | None,
+    origin: str | None,
+) -> None:
+    extras = any(value is not None for value in (area_code, area_name, kind, origin))
+    if format != "sqlite":
+        if extras:
+            raise ToolError("input.structure", 2, "input.structure")
+        return
+    if area_code is None:
+        raise ToolError("input.structure", 2, "input.structure")
+    if kind is not None and kind not in {"echomail", "netmail"}:
+        raise ToolError("input.structure", 2, "input.structure")
+
+
 def _envelope(message: ParsedMessage, format: str, base: Path) -> dict[str, object]:
     return {
         "schema_version": 1,
@@ -61,11 +85,29 @@ def _envelope(message: ParsedMessage, format: str, base: Path) -> dict[str, obje
     }
 
 
-def create(format: str, base: Path) -> dict[str, object]:
+def create(
+    format: str,
+    base: Path,
+    *,
+    area_code: str | None = None,
+    area_name: str | None = None,
+    kind: str | None = None,
+    origin: str | None = None,
+) -> dict[str, object]:
     """Create an empty base and return the create_result object."""
+    _sqlite_create_options(
+        format, area_code=area_code, area_name=area_name, kind=kind, origin=origin
+    )
     resolved = base.resolve()
     try:
-        adapters.create(format, resolved)
+        adapters.create(
+            format,
+            resolved,
+            area_code=area_code,
+            area_name=area_name,
+            kind=kind or "echomail",
+            origin=origin,
+        )
     except (ToolError, BrokenPipeError, KeyboardInterrupt):
         raise
     except Exception as error:
@@ -84,11 +126,13 @@ def write(
     records: Iterable[bytes],
     *,
     board: int | None = None,
+    area: str | None = None,
     encoding: str = "CP850",
     lock_timeout: float = 5.0,
 ) -> Iterator[dict[str, object]]:
     """Append preflighted records. Yield one write_result per commit."""
     _board(format, board, required=True)
+    _area(format, area)
     resolved = base.resolve()
     committed = 0
     record = 1
@@ -136,6 +180,7 @@ def write(
                     lock_timeout=lock_timeout,
                     concurrent=False,
                 ),
+                area=area,
             ) as session:
                 for record, text in enumerate(spool, 1):
                     result = session.append(outgoing(load(text), format))
@@ -159,6 +204,7 @@ def read(
     msgno: int,
     *,
     board: int | None = None,
+    area: str | None = None,
     fallback_charset: str = "CP850",
     lock_timeout: float = 5.0,
     body: bool = False,
@@ -166,6 +212,7 @@ def read(
 ) -> dict[str, object] | str:
     """Return one envelope, or the body text when body is set."""
     _board(format, board, required=True)
+    _area(format, area)
     if msgno < 1:
         raise ToolError("input.structure", 2, "input.structure")
     resolved = base.resolve()
@@ -175,6 +222,7 @@ def read(
             resolved,
             msgno,
             board=board,
+            area=area,
             fallback_charset=fallback_charset,
             lock_timeout=lock_timeout,
             body=body,
@@ -194,6 +242,7 @@ def _read(
     msgno: int,
     *,
     board: int | None,
+    area: str | None,
     fallback_charset: str,
     lock_timeout: float,
     body: bool,
@@ -209,6 +258,7 @@ def _read(
                 lock_timeout=lock_timeout,
                 concurrent=False,
             ),
+            area=area,
         ) as session:
             try:
                 result = session.read(msgno)
@@ -218,7 +268,7 @@ def _read(
             envelope.update(identity=result.identity, revision=result.revision)
             return envelope
     options = ReaderOptions(fallback_charset=fallback_charset, archive_mode=False)
-    for message in adapters.reader(format).read(base, options):
+    for message in adapters.reader(format, area=area).read(base, options):
         if board is not None and adapters.board_of(message, format) != board:
             continue
         if message.msgno != msgno:
@@ -234,12 +284,14 @@ def export(
     base: Path,
     *,
     board: int | None = None,
+    area: str | None = None,
     fallback_charset: str = "CP850",
     archive: bool = False,
     on_issue: Callable[[ReaderIssue], None] | None = None,
 ) -> ExportResult:
     """Stream message envelopes. Exit status is 7 when archive issues occurred."""
     _board(format, board, required=False)
+    _area(format, area)
     resolved = base.resolve()
     issues = [0]
 
@@ -256,7 +308,7 @@ def export(
 
     def envelopes() -> Iterator[dict[str, object]]:
         try:
-            for message in adapters.reader(format).read(resolved, options):
+            for message in adapters.reader(format, area=area).read(resolved, options):
                 if board is not None and adapters.board_of(message, format) != board:
                     continue
                 yield _envelope(message, format, resolved)
@@ -275,6 +327,7 @@ def heads(
     base: Path,
     *,
     board: int | None = None,
+    area: str | None = None,
     fallback_charset: str = "CP850",
     archive: bool = False,
     limit: int = 100,
@@ -283,6 +336,7 @@ def heads(
 ) -> ExportResult:
     """Index messages without body text. limit 0 reads the whole base."""
     _board(format, board, required=False)
+    _area(format, area)
     if limit < 0:
         raise ToolError("input.structure", 2, "input.structure")
     if after is not None and after < 0:
@@ -304,7 +358,7 @@ def heads(
     def rows() -> Iterator[dict[str, object]]:
         produced = 0
         try:
-            for message in adapters.reader(format).read(resolved, options):
+            for message in adapters.reader(format, area=area).read(resolved, options):
                 if board is not None and adapters.board_of(message, format) != board:
                     continue
                 if after is not None and message.msgno <= after:
