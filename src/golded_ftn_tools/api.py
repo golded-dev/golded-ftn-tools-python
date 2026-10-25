@@ -14,6 +14,7 @@ from golded_ftn import (
     ParsedMessage,
     ReaderIssue,
     ReaderOptions,
+    WriteResult,
     WriterOptions,
     detect_charset,
     repair_mojibake,
@@ -22,6 +23,7 @@ from golded_ftn import (
 from . import adapters
 from .errors import ToolError, classify
 from .json_contract import InputError, dump, load, outgoing
+from .reply_links import SourceMessage, link_patch, source_message, without_links
 
 
 class ExportResult:
@@ -130,18 +132,26 @@ def write(
     encoding: str = "CP850",
     lock_timeout: float = 5.0,
 ) -> Iterator[dict[str, object]]:
-    """Append preflighted records. Yield one write_result per commit."""
+    """Append preflighted records and remap reply links in export envelopes."""
     _board(format, board, required=True)
     _area(format, area)
     resolved = base.resolve()
     committed = 0
     record = 1
+    sources: list[SourceMessage | None] = []
+    seen: set[SourceMessage] = set()
     with tempfile.TemporaryFile(mode="w+t", encoding="utf-8", newline="\n") as spool:
         count = 0
         for record, raw in enumerate(records, 1):
             try:
                 data = load(raw.decode("utf-8", errors="strict"))
                 outgoing(data, format)
+                source = source_message(data)
+                if source is not None:
+                    if source in seen:
+                        raise InputError("duplicate source message identity")
+                    seen.add(source)
+                sources.append(source)
                 spool.write(dump(data))
             except InputError as error:
                 raise ToolError(
@@ -182,9 +192,29 @@ def write(
                 ),
                 area=area,
             ) as session:
+                results: list[WriteResult] = []
+                numbers: dict[SourceMessage, int] = {}
+                failure: ToolError | None = None
                 for record, text in enumerate(spool, 1):
-                    result = session.append(outgoing(load(text), format))
+                    message = outgoing(load(text), format)
+                    source = sources[record - 1]
+                    try:
+                        result = session.append(
+                            without_links(message) if source is not None else message
+                        )
+                    except BrokenPipeError:
+                        raise
+                    except Exception as error:
+                        failure = classify(
+                            error, input_record=record, committed=committed
+                        )
+                        break
                     committed += 1
+                    if seen:
+                        results.append(result)
+                        if source is not None:
+                            numbers[source] = result.identity.msgno
+                        continue
                     yield {
                         "schema_version": 1,
                         "type": "write_result",
@@ -192,6 +222,26 @@ def write(
                         "identity": result.identity,
                         "revision": result.revision,
                     }
+                if seen:
+                    spool.seek(0)
+                    for record, result in enumerate(results, 1):
+                        message = outgoing(load(spool.readline()), format)
+                        source = sources[record - 1]
+                        if source is not None and without_links(message) != message:
+                            result = session.update(
+                                result.identity,
+                                link_patch(message, source, numbers),
+                                result.revision,
+                            )
+                        yield {
+                            "schema_version": 1,
+                            "type": "write_result",
+                            "input_record": record,
+                            "identity": result.identity,
+                            "revision": result.revision,
+                        }
+                if failure is not None:
+                    raise failure
         except BrokenPipeError:
             raise
         except Exception as error:

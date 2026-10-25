@@ -30,6 +30,10 @@ validation finishes before opening a writer. Each append commits separately;
 a later failure keeps earlier appends. A broken pipe can hide the receipt of
 an already committed message. Rerunning may create duplicates.
 
+Export envelopes remap numeric reply links within the input batch and drop
+links to omitted messages. Their receipts follow link updates. Flat write
+objects keep destination-local reply numbers unchanged.
+
 `read --body` emits the reader's `body_text` exactly, including any controls
 present there, without adding a newline. `read --revision` adds the writer's
 identity and revision. `export --archive` reports reader issues as JSONL on

@@ -60,7 +60,8 @@ base number. Do not conceal contradictory controls, MSGID or charset declaration
 Reject unknown top-level/control keys, duplicate keys, NaN/Infinity, incorrect
 nested types, BOM and invalid UTF-8 with a record number. `provenance`, `msgno`,
 `identity`, `revision` and other non-write fields inside an export envelope are
-dropped when unwrapping. Flat write objects must not include those fields.
+dropped when unwrapping. Source identity and area metadata are used to remap
+reply links before being discarded. Flat write objects must not include those fields.
 Provenance comes from the source/read operation, not an imported claim about the
 new record.
 
@@ -70,8 +71,25 @@ format. The CLI maps nested `control_lines.kludges` to `control_lines` and neste
 stripped to match the write date grammar.
 
 No arbitrary binary header import or requested message number. Append assigns
-the format's number. Fixture authors manage forward reply links; there is no
-automatic link resolver.
+the format's number.
+
+For export envelopes, `write` translates `reply_to_msgno`, `reply1st_msgno`,
+`reply_next_msgno` and `reply_list` into the destination numbering. Links resolve
+only within the same source format, base, board and area, and only to messages
+in the same input batch. Missing targets are dropped. Forward links work, as do
+imports into an existing base. Duplicate source identities or missing source
+format/base/message number are rejected during preflight.
+
+Conversion appends messages without numeric links, then updates the links using
+the actual write results. Conversion receipts follow link updates and contain
+the resulting revisions. If an append fails, the committed prefix is linked
+using only that prefix before its receipts and the error are emitted. A link
+update failure can leave committed messages without all their links; the error
+reports the input record and total committed append count. Conversion is not a
+batch transaction. Interrupted conversion can leave incomplete links.
+
+Flat write objects retain destination-local reply numbers unchanged. Fixture
+authors manage their forward links. MSGID/REPLY control lines are unchanged.
 
 ## Export and read
 
