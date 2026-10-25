@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.1 — 2026-10-25
 
 - Remap numeric reply links when importing export envelopes, including forward links and existing destinations. Drop links to messages outside the batch and return revisions after link updates.
 

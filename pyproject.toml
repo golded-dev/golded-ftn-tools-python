@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "golded-ftn-tools"
-version = "1.1.0"
+version = "1.1.1"
 description = "FTN message bases, packets, nodelists and node operations from the command line"
 readme = "README.md"
 requires-python = ">=3.12"
