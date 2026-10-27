@@ -3,7 +3,7 @@
 Command-line tools for FTN message bases, JSON fixtures, packets, nodelists
 and node operations. Python 3.12+. MIT licensed.
 
-Version **1.1.1** fixes numeric reply links during conversion. SQLite and network
+Version **1.2.0** uses `area` in the Python API, JSON messages and CLI. SQLite and network
 operations were added in 1.1.0. Packet, nodelist and node commands require the
 optional `[network]` extra.
 
