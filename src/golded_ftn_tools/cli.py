@@ -113,12 +113,12 @@ def parser() -> argparse.ArgumentParser:
             )
         if name == "create":
             sub.add_argument(
-                "--area-code",
+                "--area",
                 help="SQLite area code (required for --format sqlite)",
             )
             sub.add_argument(
                 "--area-name",
-                help="SQLite area display name (defaults to --area-code)",
+                help="SQLite area display name (defaults to --area)",
             )
             sub.add_argument(
                 "--kind",
@@ -367,7 +367,7 @@ def _run(args: argparse.Namespace) -> int:
             api.create(
                 args.format,
                 args.base,
-                area_code=args.area_code,
+                area=args.area,
                 area_name=args.area_name,
                 kind=args.kind,
                 origin=args.origin,

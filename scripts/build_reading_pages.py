@@ -169,7 +169,7 @@ def shell(
 <div><span>FTNT💥</span><a href="https://golded-dev.github.io/golded-ftn-python-docs/">Library docs ↗</a></div>
 </header>
 <div class="shell">
-<div class="bar"><span>GOLDED / FTN TOOLS</span><span>RELEASED 1.1.1 · PYTHON 3.12+</span></div>
+<div class="bar"><span>GOLDED / FTN TOOLS</span><span>RELEASED 1.2.0 · PYTHON 3.12+</span></div>
 <div class="layout">
 <aside><div class="sidebar">
 {"".join(nav)}
@@ -177,7 +177,7 @@ def shell(
 </div></aside>
 {"".join(main)}
 </div></div>
-<footer><span>GoldED FTN tools / GoldED.dev</span><span>RELEASED 1.1.1 · MIT LICENSE</span></footer>
+<footer><span>GoldED FTN tools / GoldED.dev</span><span>RELEASED 1.2.0 · MIT LICENSE</span></footer>
 </div>
 {SCRIPT}
 </body>
@@ -195,11 +195,11 @@ def index_page() -> str:
             "install",
             "00",
             "Install",
-            "<p>Install FTNT 1.1.1 from PyPI with Python 3.12 or newer:</p>"
+            "<p>Install FTNT 1.2.0 from PyPI with Python 3.12 or newer:</p>"
             + code_pane(
                 "install-pypi",
                 "PyPI",
-                "python -m pip install golded-ftn-tools==1.1.1\nftnt --help\n",
+                "python -m pip install golded-ftn-tools==1.2.0\nftnt --help\n",
             )
             + "<p>The executable is <code>ftnt</code>. The package name is "
             "<code>golded-ftn-tools</code>. This release targets Linux and macOS. "

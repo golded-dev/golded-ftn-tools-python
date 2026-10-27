@@ -12,7 +12,7 @@ class SourceMessage:
     format: str
     base: str
     board: int | None
-    area_code: str | None
+    area: str | None
     area_meta_key: str | None
     msgno: int
 
@@ -25,7 +25,7 @@ def source_message(data: dict[str, object]) -> SourceMessage | None:
         raise InputError("export requires source and message objects")
     format, base, board = source.get("format"), source.get("base"), source.get("board")
     msgno = message.get("msgno")
-    area_code, area_meta_key = message.get("area_code"), message.get("area_meta_key")
+    area, area_meta_key = message.get("area"), message.get("area_meta_key")
     if (
         not isinstance(format, str)
         or not format
@@ -34,11 +34,11 @@ def source_message(data: dict[str, object]) -> SourceMessage | None:
         or (board is not None and type(board) is not int)
         or type(msgno) is not int
         or msgno < 1
-        or (area_code is not None and not isinstance(area_code, str))
+        or (area is not None and not isinstance(area, str))
         or (area_meta_key is not None and not isinstance(area_meta_key, str))
     ):
         raise InputError("export requires an unambiguous source message identity")
-    return SourceMessage(format, base, board, area_code, area_meta_key, msgno)
+    return SourceMessage(format, base, board, area, area_meta_key, msgno)
 
 
 def without_links(message: OutgoingMessage) -> OutgoingMessage:

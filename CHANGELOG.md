@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 — 2026-10-27
+
+- Rename the create API keyword to area and the create CLI option to --area.
+- Use area in exported messages and reply-link source identities.
+- Require the matching core, Hudson and SQLite releases.
+
 ## 1.1.1 — 2026-10-25
 
 - Remap numeric reply links when importing export envelopes, including forward links and existing destinations. Drop links to messages outside the batch and return revisions after link updates.

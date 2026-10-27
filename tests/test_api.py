@@ -31,7 +31,7 @@ def test_converted_reply_links_follow_messages(tmp_path: Path, format: str) -> N
     (source / "1.MSG").unlink()
     records = [dump(row).encode() for row in export("msg", source)]
     target = tmp_path / "target"
-    create(format, target, **({"area_code": "TEST"} if format == "sqlite" else {}))
+    create(format, target, **({"area": "TEST"} if format == "sqlite" else {}))
     board = 1 if format == "hudson" else None
     # Existing messages must not become accidental link targets.
     list(
@@ -80,7 +80,7 @@ def test_conversion_resolves_forward_links_and_drops_missing_targets(
     )
     (source / "1.MSG").unlink()
     target = tmp_path / "target"
-    create(format, target, **({"area_code": "TEST"} if format == "sqlite" else {}))
+    create(format, target, **({"area": "TEST"} if format == "sqlite" else {}))
     board = 1 if format == "hudson" else None
     list(
         write(
@@ -102,7 +102,7 @@ def test_conversion_resolves_forward_links_and_drops_missing_targets(
 
 def test_conversion_maps_next_reply_and_reply_list(tmp_path: Path) -> None:
     target = tmp_path / "target"
-    create("sqlite", target, area_code="TEST")
+    create("sqlite", target, area="TEST")
     records = []
     inputs: list[tuple[int, dict[str, object]]] = [
         (20, {"reply_next_msgno": 40, "reply_list": [99, 40]}),
@@ -136,19 +136,19 @@ def test_conversion_maps_next_reply_and_reply_list(tmp_path: Path) -> None:
     assert cast(ParsedMessage, first_squish["message"]).reply1st_msgno == 3
 
 
-@pytest.mark.parametrize("scope", ["base", "board", "area_code", "area_meta_key"])
+@pytest.mark.parametrize("scope", ["base", "board", "area", "area_meta_key"])
 def test_conversion_does_not_link_across_source_areas(
     tmp_path: Path, scope: str
 ) -> None:
     target = tmp_path / "target"
-    create("sqlite", target, area_code="TEST")
+    create("sqlite", target, area="TEST")
     parent = {
         "type": "message",
         "source": {"format": "sqlite", "base": "source", "board": 1},
         "message": {
             **json.loads(message()),
             "msgno": 20,
-            "area_code": "A",
+            "area": "A",
             "area_meta_key": "A",
         },
     }
@@ -166,7 +166,7 @@ def test_conversion_does_not_link_across_source_areas(
 
 def test_failed_conversion_finalizes_committed_prefix(tmp_path: Path) -> None:
     source = tmp_path / "source"
-    create("sqlite", source, area_code="TEST")
+    create("sqlite", source, area="TEST")
     list(
         write(
             "sqlite",
@@ -197,7 +197,7 @@ def test_failed_conversion_finalizes_committed_prefix(tmp_path: Path) -> None:
 def test_conversion_rejects_ambiguous_identity_before_writing(
     tmp_path: Path, invalid: str
 ) -> None:
-    create("sqlite", tmp_path / "target", area_code="TEST")
+    create("sqlite", tmp_path / "target", area="TEST")
     record = {
         "type": "message",
         "source": {"format": "msg", "base": "source"},
@@ -226,7 +226,7 @@ def test_conversion_rejects_ambiguous_identity_before_writing(
 
 def test_mixed_write_keeps_flat_links_in_target_numbering(tmp_path: Path) -> None:
     target = tmp_path / "target"
-    create("sqlite", target, area_code="TEST")
+    create("sqlite", target, area="TEST")
     list(write("sqlite", target, [message(subject="existing")]))
     envelope = {
         "type": "message",
@@ -356,7 +356,7 @@ def test_export_envelope_unwraps_for_write() -> None:
             "external_id": "2:230/0 abc",
             "from_address": "2:230/0",
             "to_address": None,
-            "area_code": "FIDO.GENERAL",
+            "area": "FIDO.GENERAL",
             "provenance": {"source_type": "jam", "source_path": "/tmp/general"},
             "control_lines": {
                 "kludges": [
@@ -423,7 +423,7 @@ def test_flat_write_input_still_works() -> None:
 
 def test_sqlite_create_write_roundtrip(tmp_path: Path) -> None:
     path = tmp_path / "area.sqlite3"
-    created = create("sqlite", path, area_code="FIDO.SQLITE")
+    created = create("sqlite", path, area="FIDO.SQLITE")
     assert created["format"] == "sqlite"
     receipts = list(
         write(

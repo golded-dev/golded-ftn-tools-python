@@ -58,17 +58,17 @@ def _area(format: str, area: str | None) -> None:
 def _sqlite_create_options(
     format: str,
     *,
-    area_code: str | None,
+    area: str | None,
     area_name: str | None,
     kind: str | None,
     origin: str | None,
 ) -> None:
-    extras = any(value is not None for value in (area_code, area_name, kind, origin))
+    extras = any(value is not None for value in (area, area_name, kind, origin))
     if format != "sqlite":
         if extras:
             raise ToolError("input.structure", 2, "input.structure")
         return
-    if area_code is None:
+    if area is None:
         raise ToolError("input.structure", 2, "input.structure")
     if kind is not None and kind not in {"echomail", "netmail"}:
         raise ToolError("input.structure", 2, "input.structure")
@@ -91,21 +91,21 @@ def create(
     format: str,
     base: Path,
     *,
-    area_code: str | None = None,
+    area: str | None = None,
     area_name: str | None = None,
     kind: str | None = None,
     origin: str | None = None,
 ) -> dict[str, object]:
     """Create an empty base and return the create_result object."""
     _sqlite_create_options(
-        format, area_code=area_code, area_name=area_name, kind=kind, origin=origin
+        format, area=area, area_name=area_name, kind=kind, origin=origin
     )
     resolved = base.resolve()
     try:
         adapters.create(
             format,
             resolved,
-            area_code=area_code,
+            area=area,
             area_name=area_name,
             kind=kind or "echomail",
             origin=origin,

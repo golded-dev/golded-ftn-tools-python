@@ -1,2 +1,2 @@
-ac2c066032df9b8414d1ba63ce3033fd9f3139b786b70c64eb9171d7a2c630c7  dist/golded_ftn_tools-1.1.1-py3-none-any.whl
-c340e02df4c60a963e767c6f13ec909c0ef0f5f0ff3e560e5e4a1f8d89e62867  dist/golded_ftn_tools-1.1.1.tar.gz
+7043cde5b08e3a218cdb2fcec2a9bf2f6c91eb158363302237d5323ff500204e  dist/golded_ftn_tools-1.2.0-py3-none-any.whl
+60e15042d2fd3fac7ff24ac56233b72df6a182d26c68d0d1384dedb918313433  dist/golded_ftn_tools-1.2.0.tar.gz
