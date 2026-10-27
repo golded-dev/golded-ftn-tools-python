@@ -63,7 +63,7 @@ file path, e.g. `./fixtures/general.sqlite3`.
 
 Existing base files are rejected through the writer's `create`. No `--force`,
 `--overwrite` or implicit creation in `write`. Hudson creation applies to the
-whole base and does not accept `--board`. SQLite create requires `--area-code`;
+whole base and does not accept `--board`. SQLite create requires `--area`;
 `--area-name` defaults to the code, `--kind` defaults to `echomail`, and
 `--origin` is optional. Auxiliary files and lastread initialization belong to the
 writer. Emit a create result only after success.
@@ -71,7 +71,7 @@ writer. Emit a create result only after success.
 ```sh
 ftnt create ./fixtures/hudson --format hudson
 ftnt write ./fixtures/hudson --format hudson --board 42 < examples/message.json
-ftnt create ./fixtures/general.sqlite3 --format sqlite --area-code FIDO.GENERAL
+ftnt create ./fixtures/general.sqlite3 --format sqlite --area FIDO.GENERAL
 ```
 
 ### write

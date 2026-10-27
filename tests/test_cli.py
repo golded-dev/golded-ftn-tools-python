@@ -67,7 +67,7 @@ def test_help_and_version() -> None:
 def test_base_workflow(tmp_path: Path, format: str) -> None:
     base = str(tmp_path / ("base.sqlite3" if format == "sqlite" else "base"))
     board = ["--board", "200"] if format == "hudson" else []
-    create_flags = ["--area-code", "FIDO.SQLITE"] if format == "sqlite" else []
+    create_flags = ["--area", "FIDO.SQLITE"] if format == "sqlite" else []
     result = cli("create", base, "--format", format, *create_flags)
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)["type"] == "create_result"
@@ -213,7 +213,7 @@ def test_missing_base(tmp_path: Path, format: str, command: str) -> None:
         ["write", "x", "--format", "jam", "--lock-timeout", "nan"],
         ["read", "x", "1", "--format", "msg", "--revision", "--body"],
         ["create", "x", "--format", "sqlite"],
-        ["create", "x", "--format", "jam", "--area-code", "X"],
+        ["create", "x", "--format", "jam", "--area", "X"],
         ["write", "x", "--format", "sqlite", "--board", "1"],
         ["write", "x", "--format", "jam", "--area", "X"],
     ],
@@ -337,7 +337,7 @@ def test_jam_export_pipes_into_sqlite(tmp_path: Path) -> None:
             sqlite,
             "--format",
             "sqlite",
-            "--area-code",
+            "--area",
             "FIDO.GENERAL",
         ).returncode
         == 0
@@ -364,7 +364,7 @@ def test_sqlite_export_pipes_into_jam(tmp_path: Path) -> None:
             sqlite,
             "--format",
             "sqlite",
-            "--area-code",
+            "--area",
             "FIDO.SQLITE",
         ).returncode
         == 0
@@ -425,7 +425,7 @@ def _base_path(tmp_path: Path, format: str, name: str) -> str:
 
 
 def _create_flags(format: str, area: str) -> list[str]:
-    return ["--area-code", area] if format == "sqlite" else []
+    return ["--area", area] if format == "sqlite" else []
 
 
 def _board_flags(format: str) -> list[str]:

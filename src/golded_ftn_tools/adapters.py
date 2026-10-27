@@ -46,7 +46,7 @@ def create(
     format: str,
     base: Path,
     *,
-    area_code: str | None = None,
+    area: str | None = None,
     area_name: str | None = None,
     kind: str = "echomail",
     origin: str | None = None,
@@ -63,16 +63,16 @@ def create(
         case "hudson":
             HudsonWriter().create(base)
         case "sqlite":
-            if area_code is None:
-                raise ValueError("sqlite create requires area_code")
+            if area is None:
+                raise ValueError("sqlite create requires area")
             default_origin = (
                 FtnAddress.from_string(origin) if origin is not None else None
             )
             SqliteDatabase.create(
                 base,
                 area=AreaDefinition(
-                    code=area_code,
-                    name=area_name if area_name is not None else area_code,
+                    code=area,
+                    name=area_name if area_name is not None else area,
                     kind=AreaKind(kind),
                     default_origin=default_origin,
                 ),
